@@ -1,0 +1,51 @@
+# === General / OS ===
+.DS_Store
+Thumbs.db
+.Desktop
+.env
+*.log
+
+# === Ide / Editors ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === Language Specifics (Adjust based on your stack) ===
+
+# Node.js / TypeScript (Common for Application/Infrastructure)
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-error.log*
+
+# .NET (Common for Domain/Infrastructure)
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.sln.dotSettings
+
+# Java / Kotlin
+target/
+*.class
+*.jar
+.gradle/
+
+# === DDD Specifics ===
+
+# Database / Infrastructure
+# Ignore local database files and migrations that shouldn't be shared
+*.db
+*.sqlite
+/infrastructure/persistence/local_data/
+
+# Documentation
+# If you use tools to generate diagrams from your Domain code
+/docs/generated/
+
+# Testing
+# Coverage reports from unit and integration tests
+/coverage/
+*.lcov
