@@ -1,14 +1,11 @@
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using RetailStore.Api.Features.Products.Domain;
 using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
+using RetailStore.SharedKernel.Domain;
 
 namespace RetailStore.Api.Features.Products.Application.Queries;
-
-// Read DTO (projection ready)
-public record ProductDto(
-    Guid Id, string Name, string Sku,
-    decimal Price, string Category, bool IsActive);
 
 // Query
 public record GetProductsQuery(
@@ -18,14 +15,14 @@ public record GetProductsQuery(
 
 // Handler - queries directly, bypassing repository
 public class GetProductsHandler
-    : IQueryHandler<GetProductsQuery, IReadOnlyList<ProductDto>>
+    : IRequestHandler<GetProductsQuery, IReadOnlyList<ProductDto>>
 {
     private readonly RetailStoreDbContext _db;
 
     public GetProductsHandler(RetailStoreDbContext db)
         => _db = db;
 
-    public async Task<Result<IReadOnlyList<ProductDto>>> Handle(
+    public async Task<IReadOnlyList<ProductDto>> Handle(
         GetProductsQuery query, CancellationToken ct)
     {
         var q = _db.Set<Product>()
@@ -42,6 +39,10 @@ public class GetProductsHandler
             p.Price, p.Category, p.IsActive
         )).ToListAsync(ct);
 
-        return Result.Success<IReadOnlyList<ProductDto>>(products);
+        // Throws DomainException with 404 mapping automatically
+        if (products is null)
+            throw new DomainException(ProductErrors.Empty());
+
+        return products;
     }
 }

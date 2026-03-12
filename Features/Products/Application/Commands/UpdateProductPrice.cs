@@ -2,46 +2,47 @@ using FluentValidation;
 using MediatR;
 using RetailStore.Api.Features.Products.Domain;
 using RetailStore.SharedKernel.Application;
+using RetailStore.SharedKernel.Domain;
 
 namespace RetailStore.Api.Features.Products.Application.Commands;
 
 // ─── Command ───────────────────────────────────────────────
-public sealed record CreateProductCommand(
-    string Name, string Sku, decimal Price,
-    string Category, string? Description = null
-) : ICommand<Guid>;
+public sealed record UpdateProductPriceCommand(
+    Guid ProductId, decimal Price
+) : ICommand;
 
 // ─── Validator ─────────────────────────────────────────────
-public sealed class CreateProductValidator
-    : AbstractValidator<CreateProductCommand>
+public sealed class UpdateProductPriceValidator
+    : AbstractValidator<UpdateProductPriceCommand>
 {
-    public CreateProductValidator()
+    public UpdateProductPriceValidator()
     {
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Sku).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.ProductId).NotEqual(Guid.Empty);
         RuleFor(x => x.Price).GreaterThan(0);
-        RuleFor(x => x.Category).NotEmpty().MaximumLength(100);
     }
 }
 
 // ─── Handler ──────────────────────────────────────────────
-public sealed class CreateProductHandler
-    : IRequestHandler<CreateProductCommand, Guid>
+public sealed class UpdateProductPriceHandler
+    : IRequestHandler<UpdateProductPriceCommand, Unit>
 {
     private readonly IRepository<Product> _products;
 
-    public CreateProductHandler(IRepository<Product> products)
+    public UpdateProductPriceHandler(IRepository<Product> products)
         => _products = products;
 
-    public async Task<Guid> Handle(
-        CreateProductCommand cmd, CancellationToken ct)
+    public async Task<Unit> Handle(
+        UpdateProductPriceCommand cmd, CancellationToken ct)
     {
-        var product = Product.Create(
-            cmd.Name, cmd.Sku, cmd.Price,
-            cmd.Category, cmd.Description);
+        var product = await _products.GetByIdAsync(cmd.ProductId, ct);
+
+        if (product is null)
+            throw new DomainException(ProductErrors.NotFound(cmd.ProductId));
+
+        product.UpdatePrice(cmd.Price);
 
         await _products.AddAsync(product, ct);
 
-        return product.Id;
+        return Unit.Value;
     }
 }
