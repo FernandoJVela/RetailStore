@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using RetailStore.Api.Features.Users.Domain;
+using RetailStore.Api.Features.Users.Infrastructure;
 using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
@@ -16,13 +17,14 @@ public sealed record DeactivateUserCommand(
 
 public sealed class DeactivateUserHandler : IRequestHandler<DeactivateUserCommand, Unit>
 {
-    private readonly RetailStoreDbContext _db;
+    private UserRepository _userRepository;
 
-    public DeactivateUserHandler(RetailStoreDbContext db) => _db = db;
+    public DeactivateUserHandler(UserRepository userRepository) => 
+        _userRepository = userRepository;
 
     public async Task<Unit> Handle(DeactivateUserCommand cmd, CancellationToken ct)
     {
-        var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == cmd.UserId, ct)
+        var user = await _userRepository.GetByIdAsync(cmd.UserId, ct)
             ?? throw new DomainException(UserErrors.NotFound(cmd.UserId));
 
         user.Deactivate();

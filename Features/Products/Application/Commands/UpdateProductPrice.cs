@@ -32,15 +32,9 @@ public sealed class UpdateProductPriceHandler
     : IRequestHandler<UpdateProductPriceCommand, Unit>
 {
     private readonly IRepository<Product> _products;
-    private readonly IRepository<User> _users;
 
-    public UpdateProductPriceHandler(
-        IRepository<Product> products, 
-        IRepository<User> users)
-    {
+    public UpdateProductPriceHandler(IRepository<Product> products) => 
         _products = products;
-        _users = users;
-    }
 
     public async Task<Unit> Handle(
         UpdateProductPriceCommand cmd, CancellationToken ct)
