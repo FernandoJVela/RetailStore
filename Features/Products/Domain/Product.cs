@@ -1,4 +1,5 @@
 using RetailStore.SharedKernel.Domain;
+using RetailStore.SharedKernel.Domain.ValueObjects;
 
 namespace RetailStore.Api.Features.Products.Domain;
 
@@ -7,7 +8,7 @@ public sealed class Product : AggregateRoot
     public string Name { get; private set; } = string.Empty;
     public string Sku { get; private set; } = string.Empty;
     public string? Description { get; private set; }
-    public decimal Price { get; private set; }
+    public Money Price { get; private set; } = Money.Zero;
     public string Category { get; private set; } = string.Empty;
     public bool IsActive { get; private set; } = true;
 
@@ -18,10 +19,10 @@ public sealed class Product : AggregateRoot
     /// Domain invariants are enforced HERE, not in the handler.
     /// </summary>
     public static Product Create(
-        string name, string sku, decimal price,
+        string name, string sku, Money price,
         string category, string? description = null)
     {
-        if (price <= 0)
+        if (price.Amount <= 0)
             throw new DomainException(ProductErrors.InvalidPrice());
 
         var product = new Product
@@ -36,9 +37,9 @@ public sealed class Product : AggregateRoot
         return product;
     }
 
-    public void UpdatePrice(decimal newPrice)
+    public void UpdatePrice(Money newPrice)
     {
-        if (newPrice <= 0)
+        if (newPrice.Amount <= 0)
             throw new DomainException(ProductErrors.InvalidPrice());
 
         var oldPrice = Price;

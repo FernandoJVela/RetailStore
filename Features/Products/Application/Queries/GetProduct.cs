@@ -4,6 +4,7 @@ using RetailStore.Api.Features.Products.Domain;
 using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
+using RetailStore.SharedKernel.Domain.ValueObjects;
 
 namespace RetailStore.Api.Features.Products.Application.Queries;
 
@@ -11,7 +12,7 @@ public sealed record GetProductByIdQuery(Guid Id) : IQuery<ProductDto>;
 
 public sealed record ProductDto(
     Guid Id, string Name, string Sku,
-    decimal Price, string Category, bool IsActive);
+    Money Price, string Category, bool IsActive);
 
 public sealed class GetProductByIdHandler
     : IRequestHandler<GetProductByIdQuery, ProductDto>

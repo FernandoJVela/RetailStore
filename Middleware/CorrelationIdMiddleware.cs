@@ -1,26 +1,22 @@
 namespace RetailStore.Api.Middleware;
 
-public sealed class CorrelationIdMiddleware
+public sealed class CorrelationMiddleware(RequestDelegate next)
 {
-    private const string HeaderName = "X-Correlation-Id";
-    private readonly RequestDelegate _next;
-
-    public CorrelationIdMiddleware(RequestDelegate next) => _next = next;
-
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext ctx)
     {
-        var correlationId = context.Request.Headers[HeaderName]
-            .FirstOrDefault() ?? Guid.NewGuid().ToString();
+        var correlationId = ctx.Request.Headers["X-Correlation-Id"].FirstOrDefault() 
+            ?? Guid.NewGuid().ToString();
 
-        context.Items["CorrelationId"] = correlationId;
-        context.Response.Headers[HeaderName] = correlationId;
-        context.Response.Headers["X-Request-Id"] =
-            context.TraceIdentifier;
+        var requestId = Guid.NewGuid().ToString();
 
-        using (Serilog.Context.LogContext
-            .PushProperty("CorrelationId", correlationId))
-        {
-            await _next(context);
-        }
+        ctx.Items["CorrelationId"] = correlationId;
+        ctx.Items["RequestId"] = requestId;
+
+        ctx.Response.Headers["X-Correlation-Id"] = correlationId;
+        ctx.Response.Headers["X-Request-Id"] = requestId;
+        
+        using (Serilog.Context.LogContext.PushProperty("CorrelationId", correlationId))
+        using (Serilog.Context.LogContext.PushProperty("RequestId", requestId))
+            await next(ctx);
     }
 }

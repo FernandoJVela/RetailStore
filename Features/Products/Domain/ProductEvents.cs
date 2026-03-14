@@ -1,17 +1,18 @@
 using RetailStore.SharedKernel.Domain;
+using RetailStore.SharedKernel.Domain.ValueObjects;
 
 namespace RetailStore.Api.Features.Products.Domain;
 
 public record ProductCreatedEvent(
     Guid ProductId, string Name,
-    string Sku, decimal Price) : DomainEvent
+    string Sku, Money Price) : DomainEvent
 {
     public override string EventType => "ProductCreated";
 }
 
 public record ProductPriceChangedEvent(
-    Guid ProductId, decimal OldPrice,
-    decimal NewPrice) : DomainEvent
+    Guid ProductId, Money OldPrice,
+    Money NewPrice) : DomainEvent
 {
     public override string EventType => "ProductPriceChanged";
 }

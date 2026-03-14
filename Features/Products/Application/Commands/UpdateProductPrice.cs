@@ -1,15 +1,20 @@
 using FluentValidation;
 using MediatR;
 using RetailStore.Api.Features.Products.Domain;
+using RetailStore.Api.Features.Users.Domain;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
+using RetailStore.SharedKernel.Domain.ValueObjects;
 
 namespace RetailStore.Api.Features.Products.Application.Commands;
 
 // ─── Command ───────────────────────────────────────────────
 public sealed record UpdateProductPriceCommand(
-    Guid ProductId, decimal Price
-) : ICommand;
+    Guid ProductId, Money Price
+) : ICommand, IRequirePermission
+{
+    public string RequiredPermission => "users:manage";
+}
 
 // ─── Validator ─────────────────────────────────────────────
 public sealed class UpdateProductPriceValidator
@@ -18,7 +23,7 @@ public sealed class UpdateProductPriceValidator
     public UpdateProductPriceValidator()
     {
         RuleFor(x => x.ProductId).NotEqual(Guid.Empty);
-        RuleFor(x => x.Price).GreaterThan(0);
+        RuleFor(x => x.Price.Amount).GreaterThan(0);
     }
 }
 
@@ -27,9 +32,15 @@ public sealed class UpdateProductPriceHandler
     : IRequestHandler<UpdateProductPriceCommand, Unit>
 {
     private readonly IRepository<Product> _products;
+    private readonly IRepository<User> _users;
 
-    public UpdateProductPriceHandler(IRepository<Product> products)
-        => _products = products;
+    public UpdateProductPriceHandler(
+        IRepository<Product> products, 
+        IRepository<User> users)
+    {
+        _products = products;
+        _users = users;
+    }
 
     public async Task<Unit> Handle(
         UpdateProductPriceCommand cmd, CancellationToken ct)
@@ -40,8 +51,6 @@ public sealed class UpdateProductPriceHandler
             throw new DomainException(ProductErrors.NotFound(cmd.ProductId));
 
         product.UpdatePrice(cmd.Price);
-
-        await _products.AddAsync(product, ct);
 
         return Unit.Value;
     }

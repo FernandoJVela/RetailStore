@@ -5,87 +5,51 @@ using RetailStore.SharedKernel.Domain;
 
 namespace RetailStore.Api.Middleware;
 
-public sealed class GlobalExceptionHandler : IExceptionHandler
+public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log) 
+    : IExceptionHandler
 {
-    private readonly ILogger<GlobalExceptionHandler> _logger;
-
-    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
-        => _logger = logger;
-
     public async ValueTask<bool> TryHandleAsync(
-        HttpContext httpContext,
-        Exception exception,
+        HttpContext ctx, 
+        Exception ex, 
         CancellationToken ct)
     {
-        var (statusCode, problemDetails) = exception switch
+        var (status, problem) = ex switch
         {
-            DomainException domainEx => MapDomainException(domainEx),
-            OperationCanceledException => (499, new ProblemDetails
-            {
-                Title = "Request Cancelled",
-                Detail = "The request was cancelled by the client.",
-                Status = 499
-            }),
-            _ => (500, new ProblemDetails
-            {
-                Title = "Internal Server Error",
-                Detail = "An unexpected error occurred.",
-                Status = 500
-            })
+            DomainException d => ((int)d.Error.Type, BuildProblem(d)),
+            OperationCanceledException => 
+                (499, new ProblemDetails { 
+                    Title = "Cancelled", 
+                    Status = 499 }
+                ),
+            _ => (500, new ProblemDetails { 
+                    Title = "Internal Server Error", 
+                    Status = 500, 
+                    Detail = "An unexpected error occurred." }
+                )
         };
 
-        // Enrich with correlation and trace info
-        problemDetails.Extensions["traceId"] =
-            Activity.Current?.Id
-            ?? httpContext.TraceIdentifier;
-        problemDetails.Extensions["correlationId"] =
-            httpContext.Items["CorrelationId"]?.ToString();
-        problemDetails.Extensions["timestamp"] =
-            DateTime.UtcNow.ToString("O");
+        problem.Extensions["traceId"] = Activity.Current?.Id ?? ctx.TraceIdentifier;
+        problem.Extensions["correlationId"] = ctx.Items["CorrelationId"]?.ToString();
+        problem.Extensions["requestId"] = ctx.Items["RequestId"]?.ToString();
+        problem.Extensions["timestamp"] = DateTime.UtcNow.ToString("O");
 
-        httpContext.Response.StatusCode = statusCode;
-        await httpContext.Response.WriteAsJsonAsync(
-            problemDetails, ct);
-
-        return true;  // Exception is handled
+        ctx.Response.StatusCode = status;
+        await ctx.Response.WriteAsJsonAsync(problem, ct);
+        return true;
     }
 
-    private static (int, ProblemDetails) MapDomainException(
-        DomainException ex)
+    private static ProblemDetails BuildProblem(DomainException ex)
     {
-        var statusCode = ex.Error.Type switch
-        {
-            DomainErrorType.Validation     => 400,
-            DomainErrorType.Unauthorized   => 401,
-            DomainErrorType.Forbidden      => 403,
-            DomainErrorType.NotFound       => 404,
-            DomainErrorType.Conflict       => 409,
-            DomainErrorType.BusinessRule   => 422,
-            DomainErrorType.Internal       => 500,
-            _ => 500
-        };
-
-        var problem = new ProblemDetails
+        var pd = new ProblemDetails
         {
             Type = $"https://retailstore.io/errors/{ex.Error.Code.ToLowerInvariant().Replace('_', '-')}",
-            Title = FormatTitle(ex.Error.Code),
-            Status = statusCode,
+            Title = string.Join(' ', ex.Error.Code.Split('_')).ToLowerInvariant(),
+            Status = (int)ex.Error.Type,
             Detail = ex.Error.Message
         };
-
-        problem.Extensions["errorCode"] = ex.Error.Code;
-
-        // Include validation errors array if present
+        pd.Extensions["errorCode"] = ex.Error.Code;
         if (ex.ValidationErrors is { Count: > 0 })
-        {
-            problem.Extensions["errors"] = ex.ValidationErrors
-                .Select(e => new { code = e.Code, message = e.Message });
-        }
-
-        return (statusCode, problem);
+            pd.Extensions["errors"] = ex.ValidationErrors.Select(e => new { e.Code, e.Message });
+        return pd;
     }
-
-    private static string FormatTitle(string code)
-        => string.Join(' ', code.Split('_'))
-            .ToLowerInvariant();
 }

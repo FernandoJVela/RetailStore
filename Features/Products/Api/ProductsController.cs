@@ -36,12 +36,12 @@ public sealed class ProductsController : ControllerBase
         => Ok(await _sender.Send(
             new GetProductsQuery(category, isActive), ct));
 
-    [HttpPut("{id:guid}/price")]
+    [HttpPut("price")]
     public async Task<IActionResult> UpdatePrice(
-        Guid id, UpdateProductPriceCommand command,
+        UpdateProductPriceCommand command,
         CancellationToken ct)
     {
-        await _sender.Send(command with { ProductId = id }, ct);
+        await _sender.Send(command, ct);
         return NoContent();
     }
 
