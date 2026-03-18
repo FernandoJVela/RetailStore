@@ -1,10 +1,8 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using RetailStore.Api.Features.Users.Domain;
 using RetailStore.Api.Features.Users.Infrastructure;
-using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
 
@@ -16,11 +14,11 @@ public sealed record RefreshTokenCommand(
 
 public sealed class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, LoginResponse>
 {
-    private readonly RetailStoreDbContext _db;
+    private readonly IUserRepository _users;
     private readonly IJwtTokenService _jwt;
 
-    public RefreshTokenHandler(RetailStoreDbContext db, IJwtTokenService jwt)
-    { _db = db; _jwt = jwt; }
+    public RefreshTokenHandler(IUserRepository users, IJwtTokenService jwt)
+    { _users = users; _jwt = jwt; }
 
     public async Task<LoginResponse> Handle(RefreshTokenCommand cmd, CancellationToken ct)
     {
@@ -33,7 +31,7 @@ public sealed class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, L
             ?? throw new DomainException(UserErrors.InvalidRefreshToken());
 
         var userId = Guid.Parse(userIdClaim.Value);
-        var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == userId, ct)
+        var user = await _users.GetByIdAsync(userId, ct)
             ?? throw new DomainException(UserErrors.NotFound(userId));
 
         // Verify refresh token hash matches

@@ -31,10 +31,10 @@ public sealed class UsersController(ISender sender) : ControllerBase
         Guid userId, AssignRoleCommand cmd, CancellationToken ct)
     { await sender.Send(cmd with { UserId = userId }, ct); return NoContent(); }
 
-    [HttpDelete("{userId:guid}/roles/{roleName}"), Authorize]
+    [HttpDelete("{userId:guid}/roles/{roleId:guid}"), Authorize]
     public async Task<IActionResult> RevokeRole(
-        Guid userId, string roleName, CancellationToken ct)
-    { await sender.Send(new RevokeRoleCommand(userId, roleName), ct); return NoContent(); }
+        Guid userId, Guid roleId, CancellationToken ct)
+    { await sender.Send(new RevokeRoleCommand(userId, roleId), ct); return NoContent(); }
 
     [HttpPut("{id:guid}/deactivate"), Authorize]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)

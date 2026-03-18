@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using RetailStore.Api.Features.Users.Application;
 using RetailStore.Api.Features.Users.Domain;
 using RetailStore.Infrastructure.Persistence;
-using RetailStore.SharedKernel.Application;
+using RetailStore.SharedKernel.Domain.ValueObjects;
 
 namespace RetailStore.Api.Features.Users.Infrastructure;
 
-public class UserRepository : IRepository<User>
+public class UserRepository : IUserRepository
 {
     private readonly RetailStoreDbContext _context;
 
@@ -16,6 +17,11 @@ public class UserRepository : IRepository<User>
         Guid id, CancellationToken ct)
         => await _context.Set<User>()
             .FirstOrDefaultAsync(u => u.Id == id, ct);
+
+    public async Task<User?> GetByEmailAsync(
+        Email email, CancellationToken ct)
+        => await _context.Set<User>()
+            .FirstOrDefaultAsync(u => u.Email == new Email(email), ct);
 
     public async Task<IReadOnlyList<User>> GetAllAsync(
         CancellationToken ct)
@@ -29,4 +35,10 @@ public class UserRepository : IRepository<User>
 
     public void Remove(User entity)
         => _context.Set<User>().Remove(entity);
+
+    public async Task<bool> ExistsWithEmailAsync(Email email, CancellationToken ct) 
+        => await _context.Set<User>().AnyAsync(u => u.Email == new Email(email), ct);
+
+    public async Task<bool> ExistsWithUsernameAsync(string username, CancellationToken ct)
+        => await _context.Set<User>().AnyAsync(u => u.Username == username, ct);
 }

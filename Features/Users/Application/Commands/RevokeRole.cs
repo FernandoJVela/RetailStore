@@ -1,14 +1,12 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using RetailStore.Api.Features.Users.Domain;
-using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
 
 namespace RetailStore.Api.Features.Users.Application.Commands;
 
 public sealed record RevokeRoleCommand(
-    Guid UserId, string RoleName
+    Guid UserId, Guid RoleId
 ) : ICommand, IRequirePermission
 {
     public string RequiredPermission => "users:manage";
@@ -16,17 +14,22 @@ public sealed record RevokeRoleCommand(
 
 public sealed class RevokeRoleHandler : IRequestHandler<RevokeRoleCommand, Unit>
 {
-    private readonly RetailStoreDbContext _db;
+    private readonly IUserRepository _users;
+    private readonly IRepository<Role> _roles;
 
-    public RevokeRoleHandler(RetailStoreDbContext db) => _db = db;
+    public RevokeRoleHandler(IUserRepository users, IRepository<Role> roles) 
+    { 
+        _users = users;
+        _roles = roles;
+    }
 
     public async Task<Unit> Handle(RevokeRoleCommand cmd, CancellationToken ct)
     {
-        var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == cmd.UserId, ct)
+        var user = await _users.GetByIdAsync(cmd.UserId, ct)
             ?? throw new DomainException(UserErrors.NotFound(cmd.UserId));
 
-        var role = await _db.Set<Role>().FirstOrDefaultAsync(r => r.Name == cmd.RoleName, ct)
-            ?? throw new DomainException(UserErrors.RoleNotFound(cmd.RoleName));
+        var role = await _roles.GetByIdAsync(cmd.RoleId, ct)
+            ?? throw new DomainException(UserErrors.RoleNotFound(cmd.RoleId));
 
         user.RevokeRole(role.Id, role.Name);
         // UnitOfWorkBehavior saves -> UserRoleRevokedEvent -> Outbox

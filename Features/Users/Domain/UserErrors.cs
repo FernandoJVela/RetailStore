@@ -30,6 +30,10 @@ public static class UserErrors
         "USER_ROLE_ALREADY_ASSIGNED", $"Role '{role}' is already assigned.",
         DomainErrorType.Conflict);
 
+    public static DomainError EmailAlreadyInUse(string email) => new(
+        "USER_EMAIL_ALREADY_IN_USE", $"Email '{email}' is already in use.",
+        DomainErrorType.Conflict);
+
     // ─── Business Rules ───────────────────────────────────
     public static DomainError InvalidEmail(string email) => new(
         "USER_INVALID_EMAIL", $"'{email}' is not a valid email.",
@@ -60,7 +64,7 @@ public static class UserErrors
         DomainErrorType.BusinessRule);
 
     // ─── Roles ────────────────────────────────────────────
-    public static DomainError RoleNotFound(string name) => new(
-        "ROLE_NOT_FOUND", $"Role '{name}' does not exist.",
+    public static DomainError RoleNotFound(Guid roleId) => new(
+        "ROLE_NOT_FOUND", $"Role '{roleId}' does not exist.",
         DomainErrorType.NotFound);
 }

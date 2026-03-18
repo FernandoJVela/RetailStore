@@ -1,8 +1,6 @@
 using FluentValidation;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using RetailStore.Api.Features.Users.Domain;
-using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
 using RetailStore.SharedKernel.Domain.ValueObjects;
@@ -25,22 +23,20 @@ public sealed class RegisterUserValidator : AbstractValidator<RegisterUserComman
 
 public sealed class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Guid>
 {
-    private readonly IRepository<User> _users;
-    private readonly RetailStoreDbContext _db;
+    private readonly IUserRepository _users;
 
-    public RegisterUserHandler(IRepository<User> users, RetailStoreDbContext db)
-    { _users = users; _db = db; }
+    public RegisterUserHandler(IUserRepository users)
+    { _users = users; }
 
     public async Task<Guid> Handle(RegisterUserCommand cmd, CancellationToken ct)
     {
-        // Check uniqueness
-        var emailExists = await _db.Set<User>().AnyAsync(
-            u => u.Email == new Email(cmd.Email), ct);  // EF value conversion
+        var emailExists = await _users.ExistsWithEmailAsync(
+           new Email(cmd.Email), ct);
         if (emailExists)
             throw new DomainException(UserErrors.DuplicateEmail(cmd.Email));
 
-        var usernameExists = await _db.Set<User>().AnyAsync(
-            u => u.Username == cmd.Username, ct);
+        var usernameExists = await _users.ExistsWithUsernameAsync(
+            cmd.Username, ct);
         if (usernameExists)
             throw new DomainException(UserErrors.DuplicateUsername(cmd.Username));
 

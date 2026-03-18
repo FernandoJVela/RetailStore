@@ -1,10 +1,8 @@
 using System.Security.Cryptography;
 using FluentValidation;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using RetailStore.Api.Features.Users.Domain;
 using RetailStore.Api.Features.Users.Infrastructure;
-using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
 using RetailStore.SharedKernel.Domain.ValueObjects;
@@ -27,16 +25,15 @@ public sealed class LoginValidator : AbstractValidator<LoginCommand>
 
 public sealed class LoginHandler : IRequestHandler<LoginCommand, LoginResponse>
 {
-    private readonly RetailStoreDbContext _db;
+    private readonly IUserRepository _users;
     private readonly IJwtTokenService _jwt;
 
-    public LoginHandler(RetailStoreDbContext db, IJwtTokenService jwt)
-    { _db = db; _jwt = jwt; }
+    public LoginHandler(IUserRepository users, IJwtTokenService jwt)
+    { _users = users; _jwt = jwt; }
 
     public async Task<LoginResponse> Handle(LoginCommand cmd, CancellationToken ct)
     {
-        var user = await _db.Set<User>()
-            .FirstOrDefaultAsync(u => u.Email == new Email(cmd.Email), ct)
+        var user = await _users.GetByEmailAsync(new Email(cmd.Email), ct)
             ?? throw new DomainException(UserErrors.InvalidCredentials());
 
         user.ValidateCredentials(cmd.Password);  // Throws if invalid
