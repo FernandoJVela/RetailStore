@@ -62,7 +62,6 @@ builder.Services.AddRateLimiting();
 builder.Services.AddProductsModule()
     // .AddCustomersModule()
     .AddOrdersModule()
-    .AddOrderItemsModule()
     // .AddInventoryModule()
     // .AddProvidersModule()
     .AddUsersModule();

@@ -20,11 +20,8 @@ public sealed record CreateOrderCommand(
 public sealed class CreateOrderValidator
     : AbstractValidator<CreateOrderCommand>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public CreateOrderValidator(IUnitOfWork unitOfWork)
-    {
-        _unitOfWork = unitOfWork;
-        
+    public CreateOrderValidator()
+    {        
         RuleFor(x => x.CustomerId)
             .NotEmpty().WithMessage("Customer ID is required");
             // TODO: Add CustomerExists validation
@@ -59,8 +56,12 @@ public sealed class CreateOrderHandler
     private readonly IRepository<Order> _orders;
     private readonly IRepository<Product> _products;
 
-    public CreateOrderHandler(IRepository<Order> orders)
-        => _orders = orders;
+    public CreateOrderHandler(IRepository<Order> orders, 
+        IRepository<Product> products) 
+        {
+            _orders = orders;
+            _products = products;
+        }
 
     public async Task<Guid> Handle(
         CreateOrderCommand cmd, CancellationToken ct)
@@ -84,7 +85,6 @@ public sealed class CreateOrderHandler
             
             order.AddItem(
                 product.Id,
-                product.Name,
                 itemDto.Quantity,
                 product.Price);
         }

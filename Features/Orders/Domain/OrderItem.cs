@@ -3,11 +3,10 @@ using RetailStore.SharedKernel.Domain.ValueObjects;
 
 namespace RetailStore.Api.Features.Orders.Domain;
 
-public class OrderItem : AggregateRoot
+public class OrderItem : Entity
 {
     public Guid OrderId { get; private set; }
     public Guid ProductId { get; private set; }
-    public string ProductName { get; private set; }
     public int Quantity { get; private set; }
     public decimal UnitPrice { get; private set; }
     public string UnitPriceCurrency { get; private set; }
@@ -17,21 +16,16 @@ public class OrderItem : AggregateRoot
     
     internal static OrderItem Create(
         Guid productId, 
-        string productName, 
         int quantity, 
         Money unitPrice)
     {
         if (quantity <= 0)
             throw new DomainException(OrderItemErrors.InvalidQuantity());
-        
-        if (string.IsNullOrWhiteSpace(productName))
-            throw new DomainException(OrderItemErrors.InvalidProductName());
 
         return new OrderItem
         {
             Id = Guid.NewGuid(),
             ProductId = productId,
-            ProductName = productName,
             Quantity = quantity,
             UnitPrice = unitPrice.Amount,
             UnitPriceCurrency = unitPrice.Currency,

@@ -42,7 +42,7 @@ public class Order : AggregateRoot
         return order;
     }
     
-    public void AddItem(Guid productId, string productName, int quantity, Money unitPrice)
+    public void AddItem(Guid productId, int quantity, Money unitPrice)
     {
         if (Status == OrderStatus.Completed || Status == OrderStatus.Cancelled)
             throw new DomainException(OrderErrors.InvalidOrderStatusForModification(Status));
@@ -55,7 +55,7 @@ public class Order : AggregateRoot
         }
         else
         {
-            var orderItem = OrderItem.Create(productId, productName, quantity, unitPrice);
+            var orderItem = OrderItem.Create(productId, quantity, unitPrice);
             _items.Add(orderItem);
         }
         
