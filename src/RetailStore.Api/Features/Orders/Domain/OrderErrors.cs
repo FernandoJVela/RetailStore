@@ -9,63 +9,24 @@ namespace RetailStore.Api.Features.Orders.Domain;
 /// </summary>
 public static class OrderErrors
 {
-    public static DomainError CannotCompleteEmptyOrder() => new(
-        "ORDER_CANNOT_COMPLETE_EMPTY",
-        "Cannot complete an order without items.",
-        DomainErrorType.BusinessRule);
-
-    public static DomainError OrderAlreadyCompleted() => new(
-        "ORDER_ALREADY_COMPLETED",
-        "Order is already completed.",
-        DomainErrorType.BusinessRule);
-
-    public static DomainError CannotModifyCompletedOrder() => new(
-        "ORDER_MODIFY_COMPLETED",
-        "Cannot modify a completed order.",
-        DomainErrorType.BusinessRule);
-
-    public static DomainError CustomerNotFound(Guid customerId) => new(
-        "ORDER_CUSTOMER_NOT_FOUND",
-        $"Customer with ID '{customerId}' does not exist.",
-        DomainErrorType.NotFound);
-
-    public static DomainError OrderNotFound(Guid orderId) => new(
-        "ORDER_NOT_FOUND",
-        $"Order with ID '{orderId}' does not exist.",
-        DomainErrorType.NotFound);
-
+    public static DomainError OrderNotFound(Guid id) => new(
+        "ORDER_NOT_FOUND", $"Order '{id}' not found.", DomainErrorType.NotFound);
     public static DomainError OrderNotFound() => new(
-        "ORDER_LIST_EMPTY",
-        "There are no orders registered in the system.",
-        DomainErrorType.NotFound);
-
-    public static DomainError InvalidOrderStatusTransition(OrderStatus from, OrderStatus to) => new(
-        "ORDER_INVALID_STATUS_TRANSITION",
-        $"Cannot transition order status from '{from}' to '{to}'.",
-        DomainErrorType.BusinessRule);
-
+        "ORDER_LIST_EMPTY", "No orders found.", DomainErrorType.NotFound);
+    public static DomainError CustomerNotFound(Guid id) => new(
+        "ORDER_CUSTOMER_NOT_FOUND", $"Customer '{id}' not found.", DomainErrorType.NotFound);
     public static DomainError InvalidOrderDate() => new(
-        "ORDER_INVALID_DATE",
-        "Order date cannot be in the future.",
-        DomainErrorType.BusinessRule);
-
+        "ORDER_INVALID_DATE", "Order date cannot be in the future.", DomainErrorType.BusinessRule);
+    public static DomainError CannotCompleteEmptyOrder() => new(
+        "ORDER_CANNOT_COMPLETE_EMPTY", "Cannot complete an order without items.", DomainErrorType.BusinessRule);
+    public static DomainError OrderAlreadyCompleted() => new(
+        "ORDER_ALREADY_COMPLETED", "Order is already completed or cancelled.", DomainErrorType.Conflict);
+    public static DomainError InvalidOrderStatusTransition(OrderStatus from, OrderStatus to) => new(
+        "ORDER_INVALID_STATUS_TRANSITION", $"Cannot transition from '{from}' to '{to}'.", DomainErrorType.BusinessRule);
     public static DomainError InvalidOrderStatusForModification(OrderStatus status) => new(
-        "ORDER_INVALID_STATUS_FOR_MODIFICATION",
-        $"Cannot modify order in '{status}' status.",
-        DomainErrorType.BusinessRule);
-
-    public static DomainError InvalidEmptyOrder() => new(
-        "ORDER_EMPTY",
-        "Order must have at least one item.",
-        DomainErrorType.BusinessRule);
-
+        "ORDER_INVALID_STATUS_FOR_MODIFICATION", $"Cannot modify order in '{status}' status.", DomainErrorType.BusinessRule);
     public static DomainError InvalidOrderItem(Guid productId) => new(
-        "ORDER_INVALID_ITEM",
-        $"Order does not contain an item with Product ID '{productId}'.",
-        DomainErrorType.BusinessRule);
-
+        "ORDER_INVALID_ITEM", $"No item with product '{productId}' in this order.", DomainErrorType.NotFound);
     public static DomainError InvalidOrderItemPrice(Guid productId) => new(
-        "ORDER_INVALID_ITEM_PRICE",
-        $"The price for the selected Item '{productId}' in this order should be positive.",
-        DomainErrorType.BusinessRule);
+        "ORDER_INVALID_ITEM_PRICE", $"Price for product '{productId}' must be positive.", DomainErrorType.BusinessRule);
 }
