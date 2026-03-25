@@ -10,7 +10,7 @@ using RetailStore.Api.Features.Products;
 using RetailStore.Api.Features.Customers;
 using RetailStore.Api.Features.Orders;
 using RetailStore.Api.Features.Inventory;
-// using RetailStore.Api.Features.Providers;
+using RetailStore.Api.Features.Providers;
 using RetailStore.Api.Features.Users;
 using HealthChecks.UI.Client;
 using Microsoft.OpenApi;
@@ -63,7 +63,7 @@ builder.Services.AddProductsModule()
     .AddCustomersModule()
     .AddOrdersModule()
     .AddInventoryModule()
-    // .AddProvidersModule()
+    .AddProvidersModule()
     .AddUsersModule();
 
 // ─── Outbox ──────────────────────────────────────────────
