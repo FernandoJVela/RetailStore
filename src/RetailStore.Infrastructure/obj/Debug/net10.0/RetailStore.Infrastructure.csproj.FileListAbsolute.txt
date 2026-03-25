@@ -15,3 +15,4 @@ C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\
 C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.pdb
 C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.genruntimeconfig.cache
 C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\ref\RetailStore.Infrastructure.dll
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.sourcelink.json

@@ -10,3 +10,4 @@ C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.SharedKernel\obj\De
 C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.SharedKernel\obj\Debug\net10.0\refint\RetailStore.SharedKernel.dll
 C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.SharedKernel\obj\Debug\net10.0\RetailStore.SharedKernel.pdb
 C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.SharedKernel\obj\Debug\net10.0\ref\RetailStore.SharedKernel.dll
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.SharedKernel\obj\Debug\net10.0\RetailStore.SharedKernel.sourcelink.json

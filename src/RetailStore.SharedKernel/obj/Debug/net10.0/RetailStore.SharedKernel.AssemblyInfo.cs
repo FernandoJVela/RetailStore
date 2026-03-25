@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RetailStore.SharedKernel")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5f06f1a925f16713059bd1efefeeec6476ff663a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4e044155cdb6c3ca8485f82a108ecc6c6108a64f")]
 [assembly: System.Reflection.AssemblyProductAttribute("RetailStore.SharedKernel")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RetailStore.SharedKernel")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
