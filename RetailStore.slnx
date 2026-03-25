@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RetailStore.Api/RetailStore.Api.csproj" />
+    <Project Path="src/RetailStore.Infrastructure/RetailStore.Infrastructure.csproj" />
+    <Project Path="src/RetailStore.SharedKernel/RetailStore.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RetailStore.Tests/RetailStore.Tests.csproj" />
+  </Folder>
+</Solution>

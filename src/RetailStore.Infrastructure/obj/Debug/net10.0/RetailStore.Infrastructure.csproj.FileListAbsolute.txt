@@ -1,0 +1,17 @@
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\bin\Debug\net10.0\RetailStore.Infrastructure.deps.json
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\bin\Debug\net10.0\RetailStore.Infrastructure.runtimeconfig.json
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\bin\Debug\net10.0\RetailStore.Infrastructure.dll
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\bin\Debug\net10.0\RetailStore.Infrastructure.pdb
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\bin\Debug\net10.0\RetailStore.SharedKernel.dll
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\bin\Debug\net10.0\RetailStore.SharedKernel.pdb
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.AssemblyInfo.cs
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailSt.8BB4D0F5.Up2Date
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.dll
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\refint\RetailStore.Infrastructure.dll
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.pdb
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\RetailStore.Infrastructure.genruntimeconfig.cache
+C:\Users\fernando.vela\Documents\RetailStore\src\RetailStore.Infrastructure\obj\Debug\net10.0\ref\RetailStore.Infrastructure.dll
