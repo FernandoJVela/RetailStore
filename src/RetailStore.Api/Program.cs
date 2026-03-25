@@ -7,7 +7,7 @@ using RetailStore.Infrastructure.Behaviors;
 using RetailStore.Infrastructure.Outbox;
 using RetailStore.Infrastructure.Persistence;
 using RetailStore.Api.Features.Products;
-// using RetailStore.Api.Features.Customers;
+using RetailStore.Api.Features.Customers;
 using RetailStore.Api.Features.Orders;
 // using RetailStore.Api.Features.Inventory;
 // using RetailStore.Api.Features.Providers;
@@ -60,7 +60,7 @@ builder.Services.AddRateLimiting();
 
 // ─── Feature Modules ────────────────────────────────────
 builder.Services.AddProductsModule()
-    // .AddCustomersModule()
+    .AddCustomersModule()
     .AddOrdersModule()
     // .AddInventoryModule()
     // .AddProvidersModule()
