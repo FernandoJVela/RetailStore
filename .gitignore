@@ -268,7 +268,21 @@ paket-files/
 __pycache__/
 *.pyc
 
-# Cake - Uncomment if you are using it
-# tools/
+# ─── RetailStore additions ───────────────────────────────
+# User secrets
+appsettings.*.local.json
 
-# End of https://www.toptal.com/developers/gitignore/api/aspnetcore
+# EF Core migrations snapshot (optional - some teams track this)
+# **/Migrations/*.Designer.cs
+
+# Docker
+docker-compose.override.yml
+
+# Observability local data
+seq-data/
+grafana-data/
+prometheus-data/
+
+# OS files
+.DS_Store
+Thumbs.db

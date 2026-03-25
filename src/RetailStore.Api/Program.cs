@@ -9,7 +9,7 @@ using RetailStore.Infrastructure.Persistence;
 using RetailStore.Api.Features.Products;
 using RetailStore.Api.Features.Customers;
 using RetailStore.Api.Features.Orders;
-// using RetailStore.Api.Features.Inventory;
+using RetailStore.Api.Features.Inventory;
 // using RetailStore.Api.Features.Providers;
 using RetailStore.Api.Features.Users;
 using HealthChecks.UI.Client;
@@ -62,7 +62,7 @@ builder.Services.AddRateLimiting();
 builder.Services.AddProductsModule()
     .AddCustomersModule()
     .AddOrdersModule()
-    // .AddInventoryModule()
+    .AddInventoryModule()
     // .AddProvidersModule()
     .AddUsersModule();
 
