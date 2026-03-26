@@ -14,6 +14,7 @@ using RetailStore.Api.Features.Providers;
 using RetailStore.Api.Features.Users;
 using RetailStore.Api.Features.Shipping;
 using RetailStore.Api.Features.Notifications;
+using RetailStore.Api.Features.Payments;
 using HealthChecks.UI.Client;
 using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -68,7 +69,8 @@ builder.Services.AddProductsModule()
     .AddProvidersModule()
     .AddUsersModule()
     .AddShippingModule()
-    .AddNotificationsModule();
+    .AddNotificationsModule()
+    .AddPaymentsModule();
 
 // ─── Outbox ──────────────────────────────────────────────
 builder.Services.AddHostedService<OutboxProcessor>();
