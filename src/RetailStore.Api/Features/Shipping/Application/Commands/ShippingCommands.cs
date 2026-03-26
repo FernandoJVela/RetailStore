@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Customers.Domain;
 using RetailStore.Api.Features.Orders.Domain;
 using RetailStore.Api.Features.Products.Domain;
@@ -16,9 +17,11 @@ namespace RetailStore.Api.Features.Shipping.Application.Commands;
 // ═══════════════════════════════════════════════════════════
 public sealed record CreateShipmentCommand(
     Guid OrderId
-) : ICommand<Guid>, IRequirePermission
+) : ICommand<Guid>, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "shipping:write";
+    public string AuditModule => "Shipping";
+    public string? AuditDescription => $"Creating new shipping";
 }
  
 public sealed class CreateShipmentValidator : AbstractValidator<CreateShipmentCommand>
@@ -86,9 +89,11 @@ public sealed class CreateShipmentHandler(
 public sealed record AssignCarrierCommand(
     Guid ShipmentId, string Carrier,
     string TrackingNumber, DateTime? EstimatedDelivery = null
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "shipping:write";
+    public string AuditModule => "Shipping";
+    public string? AuditDescription => $"Assigning carrier to shipping: {Carrier}";
 }
  
 public sealed class AssignCarrierValidator : AbstractValidator<AssignCarrierCommand>
@@ -118,9 +123,11 @@ public sealed class AssignCarrierHandler(IShipmentRepository shipments)
 // ═══════════════════════════════════════════════════════════
 public sealed record SetShippingCostCommand(
     Guid ShipmentId, decimal Cost, string Currency = "USD"
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "shipping:write";
+    public string AuditModule => "Shipping";
+    public string? AuditDescription => $"Setting shipping cost {Cost} {Currency}";
 }
  
 public sealed class SetShippingCostHandler(IShipmentRepository shipments)
@@ -138,8 +145,14 @@ public sealed class SetShippingCostHandler(IShipmentRepository shipments)
 // ═══════════════════════════════════════════════════════════
 // STATUS TRANSITIONS
 // ═══════════════════════════════════════════════════════════
-public sealed record MarkShippedCommand(Guid ShipmentId) : ICommand, IRequirePermission
-{ public string RequiredPermission => "shipping:write"; }
+public sealed record MarkShippedCommand(
+    Guid ShipmentId
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "shipping:write";
+    public string AuditModule => "Shipping";
+    public string? AuditDescription => $"Marking shipping";
+}
  
 public sealed class MarkShippedHandler(IShipmentRepository shipments)
     : IRequestHandler<MarkShippedCommand, Unit>
@@ -168,8 +181,14 @@ public sealed class MarkInTransitHandler(IShipmentRepository shipments)
     }
 }
  
-public sealed record MarkDeliveredCommand(Guid ShipmentId) : ICommand, IRequirePermission
-{ public string RequiredPermission => "shipping:write"; }
+public sealed record MarkDeliveredCommand(
+    Guid ShipmentId
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "shipping:write";
+    public string AuditModule => "Shipping";
+    public string? AuditDescription => $"Marking shipping as delivered";
+}
  
 public sealed class MarkDeliveredHandler(IShipmentRepository shipments)
     : IRequestHandler<MarkDeliveredCommand, Unit>
@@ -183,8 +202,14 @@ public sealed class MarkDeliveredHandler(IShipmentRepository shipments)
     }
 }
  
-public sealed record MarkFailedCommand(Guid ShipmentId, string Reason) : ICommand, IRequirePermission
-{ public string RequiredPermission => "shipping:write"; }
+public sealed record MarkFailedCommand(
+    Guid ShipmentId, string Reason
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "shipping:write";
+    public string AuditModule => "Shipping";
+    public string? AuditDescription => $"Marking shipping as failed: {Reason}";
+}
  
 public sealed class MarkFailedHandler(IShipmentRepository shipments)
     : IRequestHandler<MarkFailedCommand, Unit>
@@ -198,8 +223,14 @@ public sealed class MarkFailedHandler(IShipmentRepository shipments)
     }
 }
  
-public sealed record MarkReturnedCommand(Guid ShipmentId, string Reason) : ICommand, IRequirePermission
-{ public string RequiredPermission => "shipping:write"; }
+public sealed record MarkReturnedCommand(
+    Guid ShipmentId, string Reason
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "shipping:write";
+    public string AuditModule => "Shipping";
+    public string? AuditDescription => $"Marking shipping as returned: {Reason}";
+}
  
 public sealed class MarkReturnedHandler(IShipmentRepository shipments)
     : IRequestHandler<MarkReturnedCommand, Unit>
@@ -213,8 +244,14 @@ public sealed class MarkReturnedHandler(IShipmentRepository shipments)
     }
 }
  
-public sealed record CancelShipmentCommand(Guid ShipmentId, string Reason) : ICommand, IRequirePermission
-{ public string RequiredPermission => "shipping:write"; }
+public sealed record CancelShipmentCommand(
+    Guid ShipmentId, string Reason
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "shipping:write";
+    public string AuditModule => "Shipping";
+    public string? AuditDescription => $"Cancelling shipping: {Reason}";
+}
  
 public sealed class CancelShipmentHandler(IShipmentRepository shipments)
     : IRequestHandler<CancelShipmentCommand, Unit>

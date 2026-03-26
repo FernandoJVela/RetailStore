@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Orders.Domain;
 using RetailStore.Api.Features.Payments.Application;
 using RetailStore.Api.Features.Payments.Domain;
@@ -17,9 +18,11 @@ namespace RetailStore.Api.Features.Payments.Application.Commands;
 public sealed record CreatePaymentCommand(
     Guid OrderId, string Method, string? MethodDetail = null,
     string? GatewayName = null
-) : ICommand<Guid>, IRequirePermission
+) : ICommand<Guid>, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "payments:write";
+    public string AuditModule => "Payments";
+    public string? AuditDescription => $"New payment {Method} created";
 }
  
 public sealed class CreatePaymentValidator : AbstractValidator<CreatePaymentCommand>
@@ -69,9 +72,11 @@ public sealed class CreatePaymentHandler(
 // ═══════════════════════════════════════════════════════════
 public sealed record AuthorizePaymentCommand(
     Guid PaymentId, string? GatewayTransactionId = null, string? GatewayResponse = null
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "payments:write";
+    public string AuditModule => "Payments";
+    public string? AuditDescription => $"New payment authorized";
 }
  
 public sealed class AuthorizePaymentHandler(IPaymentRepository payments)
@@ -94,8 +99,14 @@ public sealed class AuthorizePaymentHandler(IPaymentRepository payments)
 // ═══════════════════════════════════════════════════════════
 // CAPTURE PAYMENT
 // ═══════════════════════════════════════════════════════════
-public sealed record CapturePaymentCommand(Guid PaymentId) : ICommand, IRequirePermission
-{ public string RequiredPermission => "payments:write"; }
+public sealed record CapturePaymentCommand(
+    Guid PaymentId
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "payments:write";
+    public string AuditModule => "Payments";
+    public string? AuditDescription => $"New payment captured";
+}
  
 public sealed class CapturePaymentHandler(IPaymentRepository payments)
     : IRequestHandler<CapturePaymentCommand, Unit>
@@ -112,8 +123,14 @@ public sealed class CapturePaymentHandler(IPaymentRepository payments)
 // ═══════════════════════════════════════════════════════════
 // FAIL PAYMENT
 // ═══════════════════════════════════════════════════════════
-public sealed record FailPaymentCommand(Guid PaymentId, string Reason) : ICommand, IRequirePermission
-{ public string RequiredPermission => "payments:write"; }
+public sealed record FailPaymentCommand(
+    Guid PaymentId, string Reason
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "payments:write";
+    public string AuditModule => "Payments";
+    public string? AuditDescription => $"Payment failed: {Reason}";
+}
  
 public sealed class FailPaymentHandler(IPaymentRepository payments)
     : IRequestHandler<FailPaymentCommand, Unit>
@@ -130,8 +147,14 @@ public sealed class FailPaymentHandler(IPaymentRepository payments)
 // ═══════════════════════════════════════════════════════════
 // CANCEL PAYMENT
 // ═══════════════════════════════════════════════════════════
-public sealed record CancelPaymentCommand(Guid PaymentId, string? Reason = null) : ICommand, IRequirePermission
-{ public string RequiredPermission => "payments:write"; }
+public sealed record CancelPaymentCommand(
+    Guid PaymentId, string? Reason = null
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "payments:write";
+    public string AuditModule => "Payments";
+    public string? AuditDescription => $"Payment cancelled: {Reason}";
+}
  
 public sealed class CancelPaymentHandler(IPaymentRepository payments)
     : IRequestHandler<CancelPaymentCommand, Unit>
@@ -150,9 +173,11 @@ public sealed class CancelPaymentHandler(IPaymentRepository payments)
 // ═══════════════════════════════════════════════════════════
 public sealed record RequestRefundCommand(
     Guid PaymentId, decimal Amount, string Reason
-) : ICommand<Guid>, IRequirePermission
+) : ICommand<Guid>, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "payments:refund";
+    public string AuditModule => "Payments";
+    public string? AuditDescription => $"Refund requested: {Reason}";
 }
  
 public sealed class RequestRefundValidator : AbstractValidator<RequestRefundCommand>
@@ -180,8 +205,14 @@ public sealed class RequestRefundHandler(IPaymentRepository payments)
 // ═══════════════════════════════════════════════════════════
 // COMPLETE REFUND
 // ═══════════════════════════════════════════════════════════
-public sealed record CompleteRefundCommand(Guid PaymentId, Guid RefundId) : ICommand, IRequirePermission
-{ public string RequiredPermission => "payments:refund"; }
+public sealed record CompleteRefundCommand(
+    Guid PaymentId, Guid RefundId
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "payments:refund";
+    public string AuditModule => "Payments";
+    public string? AuditDescription => $"Refund completed";
+}
  
 public sealed class CompleteRefundHandler(IPaymentRepository payments)
     : IRequestHandler<CompleteRefundCommand, Unit>
@@ -198,8 +229,14 @@ public sealed class CompleteRefundHandler(IPaymentRepository payments)
 // ═══════════════════════════════════════════════════════════
 // FAIL REFUND
 // ═══════════════════════════════════════════════════════════
-public sealed record FailRefundCommand(Guid PaymentId, Guid RefundId, string Reason) : ICommand, IRequirePermission
-{ public string RequiredPermission => "payments:refund"; }
+public sealed record FailRefundCommand(
+    Guid PaymentId, Guid RefundId, string Reason
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "payments:refund";
+    public string AuditModule => "Payments";
+    public string? AuditDescription => $"Refund failed: {Reason}";
+}
  
 public sealed class FailRefundHandler(IPaymentRepository payments)
     : IRequestHandler<FailRefundCommand, Unit>

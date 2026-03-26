@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Customers.Application;
 using RetailStore.Api.Features.Customers.Domain;
 using RetailStore.SharedKernel.Application;
@@ -16,9 +17,11 @@ public sealed record UpdateCustomerCommand(
     string FirstName,
     string LastName,
     string? Phone = null
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "customers:write";
+    public string AuditModule => "Customers";
+    public string? AuditDescription => $"Updated customer: {FirstName} {LastName}";
 }
  
 public sealed class UpdateCustomerValidator : AbstractValidator<UpdateCustomerCommand>
@@ -54,9 +57,11 @@ public sealed class UpdateCustomerHandler : IRequestHandler<UpdateCustomerComman
 public sealed record ChangeCustomerEmailCommand(
     Guid CustomerId,
     string NewEmail
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "customers:write";
+    public string AuditModule => "Customers";
+    public string? AuditDescription => $"Updating customer email: {NewEmail}";
 }
  
 public sealed class ChangeCustomerEmailValidator : AbstractValidator<ChangeCustomerEmailCommand>
@@ -98,9 +103,11 @@ public sealed record UpdateShippingAddressCommand(
     string State,
     string ZipCode,
     string Country
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "customers:write";
+    public string AuditModule => "Customers";
+    public string? AuditDescription => $"Updating customer address: {Street} {City} {State}";
 }
  
 public sealed class UpdateShippingAddressValidator : AbstractValidator<UpdateShippingAddressCommand>
@@ -135,9 +142,13 @@ public sealed class UpdateShippingAddressHandler : IRequestHandler<UpdateShippin
 // ═══════════════════════════════════════════════════════════
 // DEACTIVATE CUSTOMER
 // ═══════════════════════════════════════════════════════════
-public sealed record DeactivateCustomerCommand(Guid CustomerId) : ICommand, IRequirePermission
+public sealed record DeactivateCustomerCommand(
+    Guid CustomerId
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "customers:write";
+    public string AuditModule => "Customers";
+    public string? AuditDescription => $"Deactivating customer";
 }
  
 public sealed class DeactivateCustomerHandler : IRequestHandler<DeactivateCustomerCommand, Unit>
@@ -158,9 +169,13 @@ public sealed class DeactivateCustomerHandler : IRequestHandler<DeactivateCustom
 // ═══════════════════════════════════════════════════════════
 // REACTIVATE CUSTOMER
 // ═══════════════════════════════════════════════════════════
-public sealed record ReactivateCustomerCommand(Guid CustomerId) : ICommand, IRequirePermission
+public sealed record ReactivateCustomerCommand(
+    Guid CustomerId
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "customers:write";
+    public string AuditModule => "Customers";
+    public string? AuditDescription => $"Reactivating customer";
 }
  
 public sealed class ReactivateCustomerHandler : IRequestHandler<ReactivateCustomerCommand, Unit>

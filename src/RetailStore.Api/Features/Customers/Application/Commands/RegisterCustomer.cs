@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Customers.Application;
 using RetailStore.Api.Features.Customers.Domain;
 using RetailStore.SharedKernel.Application;
@@ -15,9 +16,11 @@ public sealed record RegisterCustomerCommand(
     string Email,
     string? Phone = null,
     ShippingAddressDto? ShippingAddress = null
-) : ICommand<Guid>, IRequirePermission
+) : ICommand<Guid>, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "customers:write";
+    public string AuditModule => "Customers";
+    public string? AuditDescription => $"Registering new customer: {FirstName} {LastName}";
 }
  
 public sealed record ShippingAddressDto(

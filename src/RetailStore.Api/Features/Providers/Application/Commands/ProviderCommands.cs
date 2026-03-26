@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Products.Domain;
 using RetailStore.Api.Features.Providers.Domain;
 using RetailStore.SharedKernel.Application;
@@ -13,9 +14,11 @@ namespace RetailStore.Api.Features.Providers.Application.Commands;
 public sealed record RegisterProviderCommand(
     string CompanyName, string ContactName,
     string Email, string? Phone = null
-) : ICommand<Guid>, IRequirePermission
+) : ICommand<Guid>, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "providers:write";
+    public string AuditModule => "Providers";
+    public string? AuditDescription => $"Registering new provider: {CompanyName}";
 }
  
 public sealed class RegisterProviderValidator : AbstractValidator<RegisterProviderCommand>
@@ -51,9 +54,11 @@ public sealed class RegisterProviderHandler(IProviderRepository providers)
 public sealed record UpdateProviderCommand(
     Guid ProviderId, string CompanyName,
     string ContactName, string? Phone = null
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "providers:write";
+    public string AuditModule => "Providers";
+    public string? AuditDescription => $"Updating provider: {CompanyName}";
 }
  
 public sealed class UpdateProviderValidator : AbstractValidator<UpdateProviderCommand>
@@ -85,9 +90,11 @@ public sealed class UpdateProviderHandler(IProviderRepository providers)
 // ═══════════════════════════════════════════════════════════
 public sealed record ChangeProviderEmailCommand(
     Guid ProviderId, string NewEmail
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "providers:write";
+    public string AuditModule => "Providers";
+    public string? AuditDescription => $"Changing provider email: {NewEmail}";
 }
  
 public sealed class ChangeProviderEmailValidator : AbstractValidator<ChangeProviderEmailCommand>
@@ -121,9 +128,11 @@ public sealed class ChangeProviderEmailHandler(IProviderRepository providers)
 // ═══════════════════════════════════════════════════════════
 public sealed record AssociateProductCommand(
     Guid ProviderId, Guid ProductId
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "providers:write";
+    public string AuditModule => "Providers";
+    public string? AuditDescription => $"Associating product: {ProductId}";
 }
  
 public sealed class AssociateProductHandler(
@@ -152,9 +161,11 @@ public sealed class AssociateProductHandler(
 // ═══════════════════════════════════════════════════════════
 public sealed record DissociateProductCommand(
     Guid ProviderId, Guid ProductId
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "providers:write";
+    public string AuditModule => "Providers";
+    public string? AuditDescription => $"Dissociating product: {ProductId}";
 }
  
 public sealed class DissociateProductHandler(IProviderRepository providers)
@@ -173,8 +184,14 @@ public sealed class DissociateProductHandler(IProviderRepository providers)
 // ═══════════════════════════════════════════════════════════
 // DEACTIVATE / REACTIVATE
 // ═══════════════════════════════════════════════════════════
-public sealed record DeactivateProviderCommand(Guid ProviderId) : ICommand, IRequirePermission
-{ public string RequiredPermission => "providers:write"; }
+public sealed record DeactivateProviderCommand(
+    Guid ProviderId
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "providers:write";
+    public string AuditModule => "Providers";
+    public string? AuditDescription => $"Deactivating provider";
+}
  
 public sealed class DeactivateProviderHandler(IProviderRepository providers)
     : IRequestHandler<DeactivateProviderCommand, Unit>
@@ -188,8 +205,14 @@ public sealed class DeactivateProviderHandler(IProviderRepository providers)
     }
 }
  
-public sealed record ReactivateProviderCommand(Guid ProviderId) : ICommand, IRequirePermission
-{ public string RequiredPermission => "providers:write"; }
+public sealed record ReactivateProviderCommand(
+    Guid ProviderId
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "providers:write";
+    public string AuditModule => "Providers";
+    public string? AuditDescription => $"Reactivating provider";
+}
  
 public sealed class ReactivateProviderHandler(IProviderRepository providers)
     : IRequestHandler<ReactivateProviderCommand, Unit>

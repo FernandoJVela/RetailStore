@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Inventory.Domain;
 using RetailStore.Api.Features.Products.Domain;
 using RetailStore.SharedKernel.Application;
@@ -12,9 +13,11 @@ namespace RetailStore.Api.Features.Inventory.Application.Commands;
 // ═══════════════════════════════════════════════════════════
 public sealed record CreateInventoryItemCommand(
     Guid ProductId, int InitialQuantity, int ReorderThreshold = 10
-) : ICommand<Guid>, IRequirePermission
+) : ICommand<Guid>, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "inventory:write";
+    public string AuditModule => "Inventory";
+    public string? AuditDescription => $"Creating new item with initial quantity: {InitialQuantity}";
 }
  
 public sealed class CreateInventoryItemValidator : AbstractValidator<CreateInventoryItemCommand>
@@ -53,9 +56,11 @@ public sealed class CreateInventoryItemHandler(
 // ═══════════════════════════════════════════════════════════
 public sealed record AddStockCommand(
     Guid ProductId, int Quantity
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "inventory:adjust";
+    public string AuditModule => "Inventory";
+    public string? AuditDescription => $"Adding {Quantity} items to current stock";
 }
  
 public sealed class AddStockValidator : AbstractValidator<AddStockCommand>
@@ -85,9 +90,11 @@ public sealed class AddStockHandler(IInventoryRepository inventory)
 // ═══════════════════════════════════════════════════════════
 public sealed record RemoveStockCommand(
     Guid ProductId, int Quantity
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "inventory:adjust";
+    public string AuditModule => "Inventory";
+    public string? AuditDescription => $"Removing {Quantity} items from stock";
 }
  
 public sealed class RemoveStockValidator : AbstractValidator<RemoveStockCommand>
@@ -117,9 +124,11 @@ public sealed class RemoveStockHandler(IInventoryRepository inventory)
 // ═══════════════════════════════════════════════════════════
 public sealed record ReserveStockCommand(
     Guid ProductId, int Quantity
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "inventory:adjust";
+    public string AuditModule => "Inventory";
+    public string? AuditDescription => $"Reserving {Quantity} from stock";
 }
  
 public sealed class ReserveStockHandler(IInventoryRepository inventory)
@@ -140,9 +149,11 @@ public sealed class ReserveStockHandler(IInventoryRepository inventory)
 // ═══════════════════════════════════════════════════════════
 public sealed record ReleaseReservationCommand(
     Guid ProductId, int Quantity
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "inventory:adjust";
+    public string AuditModule => "Inventory";
+    public string? AuditDescription => $"Releasing {Quantity} items from reserved stock";
 }
  
 public sealed class ReleaseReservationHandler(IInventoryRepository inventory)
@@ -163,9 +174,11 @@ public sealed class ReleaseReservationHandler(IInventoryRepository inventory)
 // ═══════════════════════════════════════════════════════════
 public sealed record FulfillReservationCommand(
     Guid ProductId, int Quantity
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "inventory:adjust";
+    public string AuditModule => "Inventory";
+    public string? AuditDescription => $"Reservation from {Quantity} items fulfilled";
 }
  
 public sealed class FulfillReservationHandler(IInventoryRepository inventory)
@@ -186,9 +199,11 @@ public sealed class FulfillReservationHandler(IInventoryRepository inventory)
 // ═══════════════════════════════════════════════════════════
 public sealed record AdjustStockCommand(
     Guid ProductId, int NewQuantity, string Reason
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "inventory:adjust";
+    public string AuditModule => "Inventory";
+    public string? AuditDescription => $"Adjusting stock to {NewQuantity}: {Reason}";
 }
  
 public sealed class AdjustStockValidator : AbstractValidator<AdjustStockCommand>
@@ -219,9 +234,11 @@ public sealed class AdjustStockHandler(IInventoryRepository inventory)
 // ═══════════════════════════════════════════════════════════
 public sealed record UpdateReorderThresholdCommand(
     Guid ProductId, int NewThreshold
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "inventory:adjust";
+    public string AuditModule => "Inventory";
+    public string? AuditDescription => $"Updating reorder threshold to: {NewThreshold}";
 }
  
 public sealed class UpdateReorderThresholdValidator : AbstractValidator<UpdateReorderThresholdCommand>

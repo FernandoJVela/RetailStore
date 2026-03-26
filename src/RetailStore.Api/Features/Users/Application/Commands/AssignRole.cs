@@ -1,4 +1,5 @@
 using MediatR;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Users.Domain;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
@@ -7,9 +8,11 @@ namespace RetailStore.Api.Features.Users.Application.Commands;
 
 public sealed record AssignRoleCommand(
     Guid UserId, Guid RoleId
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "users:manage";
+    public string AuditModule => "Users";
+    public string? AuditDescription => $"Assigning new role {RoleId}";
 }
 
 public sealed class AssignRoleHandler : IRequestHandler<AssignRoleCommand, Unit>

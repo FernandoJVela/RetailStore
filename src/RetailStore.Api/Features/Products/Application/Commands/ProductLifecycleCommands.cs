@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Products.Domain;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
@@ -11,9 +12,11 @@ namespace RetailStore.Api.Features.Products.Application.Commands;
 // ═══════════════════════════════════════════════════════════
 public sealed record UpdateProductDetailsCommand(
     Guid ProductId, string Name, string Category, string? Description = null
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "products:write";
+    public string AuditModule => "Products";
+    public string? AuditDescription => $"Updating product {Name}";
 }
  
 public sealed class UpdateProductDetailsValidator : AbstractValidator<UpdateProductDetailsCommand>
@@ -43,9 +46,13 @@ public sealed class UpdateProductDetailsHandler(IRepository<Product> products)
 // ═══════════════════════════════════════════════════════════
 // DEACTIVATE PRODUCT (FIXED: no AddAsync on existing entity)
 // ═══════════════════════════════════════════════════════════
-public sealed record DeactivateProductCommand(Guid ProductId) : ICommand, IRequirePermission
+public sealed record DeactivateProductCommand(
+    Guid ProductId
+    ) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "products:write";
+    public string AuditModule => "Products";
+    public string? AuditDescription => $"Deactivating product: {ProductId}";
 }
  
 public sealed class DeactivateProductValidator : AbstractValidator<DeactivateProductCommand>
@@ -74,9 +81,13 @@ public sealed class DeactivateProductHandler(IRepository<Product> products)
 // ═══════════════════════════════════════════════════════════
 // REACTIVATE PRODUCT
 // ═══════════════════════════════════════════════════════════
-public sealed record ReactivateProductCommand(Guid ProductId) : ICommand, IRequirePermission
+public sealed record ReactivateProductCommand(
+    Guid ProductId
+    ) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "products:write";
+    public string AuditModule => "Products";
+    public string? AuditDescription => $"Reactivating product: {ProductId}";
 }
  
 public sealed class ReactivateProductHandler(IRepository<Product> products)

@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Products.Domain;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
@@ -9,9 +10,11 @@ namespace RetailStore.Api.Features.Products.Application.Commands;
  
 public sealed record UpdateProductPriceCommand(
     Guid ProductId, decimal Price, string Currency = "USD"
-) : ICommand, IRequirePermission
+) : ICommand, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "products:write";
+    public string AuditModule => "Products";
+    public string? AuditDescription => $"Updating price to {Price} {Currency}";
 }
  
 public sealed class UpdateProductPriceValidator : AbstractValidator<UpdateProductPriceCommand>

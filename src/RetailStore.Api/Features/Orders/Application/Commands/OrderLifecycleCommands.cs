@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Orders.Domain;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain;
@@ -7,8 +8,14 @@ using RetailStore.SharedKernel.Domain;
 namespace RetailStore.Api.Features.Orders.Application.Commands;
  
 // ─── Confirm ────────────────────────────────────────────────
-public sealed record ConfirmOrderCommand(Guid OrderId) : ICommand, IRequirePermission
-{ public string RequiredPermission => "orders:write"; }
+public sealed record ConfirmOrderCommand(
+    Guid OrderId
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "orders:write";
+    public string AuditModule => "Orders";
+    public string? AuditDescription => $"Confirming order";
+}
  
 public sealed class ConfirmOrderHandler(IRepository<Order> orders) : IRequestHandler<ConfirmOrderCommand, Unit>
 {
@@ -22,8 +29,14 @@ public sealed class ConfirmOrderHandler(IRepository<Order> orders) : IRequestHan
 }
  
 // ─── Complete ───────────────────────────────────────────────
-public sealed record CompleteOrderCommand(Guid OrderId) : ICommand, IRequirePermission
-{ public string RequiredPermission => "orders:write"; }
+public sealed record CompleteOrderCommand(
+    Guid OrderId
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "orders:write";
+    public string AuditModule => "Orders";
+    public string? AuditDescription => $"Completing order";
+}
  
 public sealed class CompleteOrderHandler(IRepository<Order> orders) : IRequestHandler<CompleteOrderCommand, Unit>
 {
@@ -37,8 +50,15 @@ public sealed class CompleteOrderHandler(IRepository<Order> orders) : IRequestHa
 }
  
 // ─── Cancel ─────────────────────────────────────────────────
-public sealed record CancelOrderCommand(Guid OrderId, string Reason) : ICommand, IRequirePermission
-{ public string RequiredPermission => "orders:write"; }
+public sealed record CancelOrderCommand(
+    Guid OrderId, 
+    string Reason
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "orders:write";
+    public string AuditModule => "Orders";
+    public string? AuditDescription => $"Cancelling order: {Reason}";
+}
  
 public sealed class CancelOrderValidator : AbstractValidator<CancelOrderCommand>
 {
@@ -61,8 +81,15 @@ public sealed class CancelOrderHandler(IRepository<Order> orders) : IRequestHand
 }
  
 // ─── Remove Item ────────────────────────────────────────────
-public sealed record RemoveOrderItemCommand(Guid OrderId, Guid ProductId) : ICommand, IRequirePermission
-{ public string RequiredPermission => "orders:write"; }
+public sealed record RemoveOrderItemCommand(
+    Guid OrderId, 
+    Guid ProductId
+) : ICommand, IRequirePermission, IAuditable
+{ 
+    public string RequiredPermission => "orders:write";
+    public string AuditModule => "Orders";
+    public string? AuditDescription => $"Removing item {ProductId}";
+}
  
 public sealed class RemoveOrderItemHandler(IRepository<Order> orders) : IRequestHandler<RemoveOrderItemCommand, Unit>
 {

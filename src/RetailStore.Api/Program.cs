@@ -16,6 +16,7 @@ using RetailStore.Api.Features.Shipping;
 using RetailStore.Api.Features.Notifications;
 using RetailStore.Api.Features.Payments;
 using RetailStore.Api.Features.Reports;
+using RetailStore.Api.Features.Audit.Infrastructure;
 using HealthChecks.UI.Client;
 using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -49,7 +50,8 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavi
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ExceptionHandlingBehavior<,>)); // 5
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));    // 6
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>)); // 7
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkBehavior<,>));    // 8
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));         // 8
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkBehavior<,>));    // 9
 
 // ─── Validation ──────────────────────────────────────────
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
@@ -95,8 +97,6 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Ingrese su token JWT"
     });
 
-    // 2. Security requirement (.NET 10)
-    // Use a delegate to reference this definition on a secure way
     options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
         [new OpenApiSecuritySchemeReference(schemeId, document)] = []
@@ -124,10 +124,9 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// ─── Middleware Pipeline (ORDER MATTERS!) ────────────────
-app.UseMiddleware<CorrelationMiddleware>();  // 1st: IDs
-app.UseExceptionHandler();                   // 2nd: catch all
-app.UseRateLimiter();                        // 3rd: protect
+app.UseMiddleware<CorrelationMiddleware>();
+app.UseExceptionHandler();
+app.UseRateLimiter();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();

@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using RetailStore.Api.Features.Audit.Domain;
 using RetailStore.Api.Features.Orders.Domain;
 using RetailStore.Api.Features.Products.Domain;
 using RetailStore.SharedKernel.Application;
@@ -11,9 +12,11 @@ public sealed record CreateOrderItemDto(Guid ProductId, int Quantity);
  
 public sealed record CreateOrderCommand(
     Guid CustomerId, DateTime? OrderDate, List<CreateOrderItemDto> Items
-) : ICommand<Guid>, IRequirePermission
+) : ICommand<Guid>, IRequirePermission, IAuditable
 {
     public string RequiredPermission => "orders:write";
+    public string AuditModule => "Orders";
+    public string? AuditDescription => $"Creating order with {Items.Count} items.";
 }
  
 public sealed class CreateOrderValidator : AbstractValidator<CreateOrderCommand>
