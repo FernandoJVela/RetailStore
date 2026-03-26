@@ -3,10 +3,9 @@ using MediatR;
 using RetailStore.Api.Features.Products.Domain;
 using RetailStore.SharedKernel.Application;
 using RetailStore.SharedKernel.Domain.ValueObjects;
-
+ 
 namespace RetailStore.Api.Features.Products.Application.Commands;
-
-// ─── Command ───────────────────────────────────────────────
+ 
 public sealed record CreateProductCommand(
     string Name, string Sku, decimal Price, string Currency,
     string Category, string? Description = null
@@ -14,10 +13,8 @@ public sealed record CreateProductCommand(
 {
     public string RequiredPermission => "products:write";
 }
-
-// ─── Validator ─────────────────────────────────────────────
-public sealed class CreateProductValidator
-    : AbstractValidator<CreateProductCommand>
+ 
+public sealed class CreateProductValidator : AbstractValidator<CreateProductCommand>
 {
     public CreateProductValidator()
     {
@@ -25,29 +22,21 @@ public sealed class CreateProductValidator
         RuleFor(x => x.Sku).NotEmpty().MaximumLength(50);
         RuleFor(x => x.Price).GreaterThan(0);
         RuleFor(x => x.Currency).NotEmpty().Length(3);
-        RuleFor(x => x.Category).NotEmpty();
+        RuleFor(x => x.Category).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Description).MaximumLength(2000).When(x => x.Description is not null);
     }
 }
-
-// ─── Handler ──────────────────────────────────────────────
-public sealed class CreateProductHandler
+ 
+public sealed class CreateProductHandler(IRepository<Product> products)
     : IRequestHandler<CreateProductCommand, Guid>
 {
-    private readonly IRepository<Product> _products;
-
-    public CreateProductHandler(IRepository<Product> products)
-        => _products = products;
-
-    public async Task<Guid> Handle(
-        CreateProductCommand cmd, CancellationToken ct)
+    public async Task<Guid> Handle(CreateProductCommand cmd, CancellationToken ct)
     {
         var price = new Money(cmd.Price, cmd.Currency);
         var product = Product.Create(
-            cmd.Name, cmd.Sku, price,
-            cmd.Category, cmd.Description);
-
-        await _products.AddAsync(product, ct);
-
+            cmd.Name, cmd.Sku, price, cmd.Category, cmd.Description);
+ 
+        await products.AddAsync(product, ct);
         return product.Id;
     }
 }

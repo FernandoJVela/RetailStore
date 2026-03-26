@@ -41,7 +41,7 @@ public sealed class AddOrderItemHandler : IRequestHandler<AddOrderItemCommand, U
             ?? throw new DomainException(ProductErrors.NotFound(cmd.ProductId));
  
         if (!product.IsActive)
-            throw new DomainException(ProductErrors.AlreadyDeactivated(cmd.ProductId));
+            throw new DomainException(ProductErrors.AlreadyDeactivated());
  
         order.AddItem(product.Id, cmd.Quantity, product.Price);
         return Unit.Value;
