@@ -1,0 +1,88 @@
+@import "tailwindcss";
+ 
+/* ═══════════════════════════════════════════════════════════
+   RetailStore Theme — Blue / Gray / Black basis
+   ═══════════════════════════════════════════════════════════ */
+ 
+@theme {
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+ 
+  /* Primary — Blue */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #0f1d3d;
+ 
+  /* Slate grays — neutral scale */
+  --color-surface-50: #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-300: #cbd5e1;
+  --color-surface-400: #94a3b8;
+  --color-surface-500: #64748b;
+  --color-surface-600: #475569;
+  --color-surface-700: #334155;
+  --color-surface-800: #1e293b;
+  --color-surface-900: #0f172a;
+  --color-surface-950: #020617;
+ 
+  /* Semantic */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #06b6d4;
+}
+ 
+/* ═══════════════════════════════════════════════════════════
+   CSS Variables for Light/Dark toggle (controlled by ThemeProvider)
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --bg-primary: var(--color-surface-50);
+  --bg-secondary: #ffffff;
+  --bg-tertiary: var(--color-surface-100);
+  --text-primary: var(--color-surface-900);
+  --text-secondary: var(--color-surface-600);
+  --text-muted: var(--color-surface-400);
+  --border-color: var(--color-surface-200);
+  --sidebar-bg: var(--color-primary-950);
+  --sidebar-text: var(--color-surface-300);
+  --sidebar-active: var(--color-primary-500);
+}
+ 
+.dark {
+  --bg-primary: var(--color-surface-950);
+  --bg-secondary: var(--color-surface-900);
+  --bg-tertiary: var(--color-surface-800);
+  --text-primary: var(--color-surface-50);
+  --text-secondary: var(--color-surface-400);
+  --text-muted: var(--color-surface-500);
+  --border-color: var(--color-surface-700);
+  --sidebar-bg: #000000;
+  --sidebar-text: var(--color-surface-400);
+  --sidebar-active: var(--color-primary-400);
+}
+ 
+/* ═══════════════════════════════════════════════════════════
+   Base Styles
+   ═══════════════════════════════════════════════════════════ */
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.2s, color 0.2s;
+}
+ 
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-surface-300); border-radius: 3px; }
+.dark ::-webkit-scrollbar-thumb { background: var(--color-surface-600); }

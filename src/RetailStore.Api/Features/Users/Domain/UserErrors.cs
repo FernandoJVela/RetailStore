@@ -5,6 +5,9 @@ namespace RetailStore.Api.Features.Users.Domain;
 public static class UserErrors
 {
     // ─── Lookup ────────────────────────────────────────────
+    public static DomainError NotFound() => new(
+        "USERS_NOT_FOUND", $"Users not available.",
+        DomainErrorType.NotFound);
     public static DomainError NotFound(Guid id) => new(
         "USER_NOT_FOUND", $"User '{id}' does not exist.",
         DomainErrorType.NotFound);
@@ -64,6 +67,9 @@ public static class UserErrors
         DomainErrorType.BusinessRule);
 
     // ─── Roles ────────────────────────────────────────────
+    public static DomainError RoleNotFound() => new(
+        "ROLES_NOT_FOUND", $"None role has been defined.",
+        DomainErrorType.NotFound);
     public static DomainError RoleNotFound(Guid roleId) => new(
         "ROLE_NOT_FOUND", $"Role '{roleId}' does not exist.",
         DomainErrorType.NotFound);

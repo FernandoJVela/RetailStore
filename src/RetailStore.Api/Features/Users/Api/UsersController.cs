@@ -22,9 +22,17 @@ public sealed class UsersController(ISender sender) : ControllerBase
     public async Task<IActionResult> Refresh(RefreshTokenCommand cmd, CancellationToken ct)
         => Ok(await sender.Send(cmd, ct));
 
+    [HttpGet, Authorize]
+    public async Task<IActionResult> GetUsers(CancellationToken ct)
+        => Ok(await sender.Send(new GetUsersQuery(), ct));
+
     [HttpGet("{id:guid}"), Authorize]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         => Ok(await sender.Send(new GetUserByIdQuery(id), ct));
+
+    [HttpGet("roles"), Authorize]
+    public async Task<IActionResult> GetRoles(CancellationToken ct)
+        => Ok(await sender.Send(new GetRolesQuery(), ct));
 
     [HttpPost("{userId:guid}/roles"), Authorize]
     public async Task<IActionResult> AssignRole(
