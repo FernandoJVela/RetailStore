@@ -8,6 +8,9 @@ import { LoginPage } from '@features/users/ui/pages/LoginPage';
 import { RegisterPage } from '@features/users/ui/pages/RegisterPage';
 import { UsersListPage } from '@features/users/ui/pages/UsersListPage';
  
+// ─── Customers ───────────────────────────────────────────────
+import { CustomersListPage } from '@features/customers/ui/pages/CustomersListPage';
+ 
 // ─── Products ───────────────────────────────────────────────
 import { ProductsListPage } from '@features/products/ui/pages/ProductsListPage';
  
@@ -38,7 +41,7 @@ export const router = createBrowserRouter([
       { index: true, element: <PlaceholderPage title="Dashboard" /> },
       { path: 'products', element: <ProductsListPage /> },
       { path: 'orders', element: <PlaceholderPage title="Orders" /> },
-      //{ path: 'customers', element: <CustomersListPage /> },
+      { path: 'customers', element: <CustomersListPage /> },
       { path: 'inventory', element: <PlaceholderPage title="Inventory" /> },
       { path: 'providers', element: <PlaceholderPage title="Providers" /> },
       { path: 'shipping', element: <PlaceholderPage title="Shipping" /> },
