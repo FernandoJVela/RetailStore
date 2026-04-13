@@ -22,7 +22,7 @@ public sealed class GetUsersHandler
         var users = await _db.Set<User>()
             .AsNoTracking()
             .Select(u => new UserDto(
-                u.Id, u.Username, u.Email, u.IsActive))
+                u.Id, u.Username, u.Email, u.LastLoginAt, u.IsActive))
             .ToListAsync(ct);
 
         // Throws DomainException with 404 mapping automatically

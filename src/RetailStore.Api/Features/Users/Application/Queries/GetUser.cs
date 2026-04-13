@@ -10,7 +10,7 @@ namespace RetailStore.Api.Features.Users.Application.Queries;
 public sealed record GetUserByIdQuery(Guid Id) : IQuery<UserDto>;
 
 public sealed record UserDto(
-    Guid Id, string Username, string Email, bool IsActive);
+    Guid Id, string Username, string Email, DateTime? LastLoginAt, bool IsActive);
 
 public sealed class GetUserByIdHandler
     : IRequestHandler<GetUserByIdQuery, UserDto>
@@ -26,7 +26,7 @@ public sealed class GetUserByIdHandler
             .AsNoTracking()
             .Where(u => u.Id == query.Id)
             .Select(u => new UserDto(
-                u.Id, u.Username, u.Email, u.IsActive))
+                u.Id, u.Username, u.Email, u.LastLoginAt, u.IsActive))
             .FirstOrDefaultAsync(ct);
 
         // Throws DomainException with 404 mapping automatically

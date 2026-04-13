@@ -17,6 +17,9 @@ import { ProductsListPage } from '@features/products/ui/pages/ProductsListPage';
 // ─── Inventory ──────────────────────────────────────────────
 import { InventoryListPage } from '@features/inventory/ui/pages/InventoryListPage';
  
+// ─── Providers ──────────────────────────────────────────────
+import { ProvidersListPage } from '@features/providers/ui/pages/ProvidersListPage';
+ 
 // ─── Placeholder pages (to be built per module later) ───────
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -46,7 +49,7 @@ export const router = createBrowserRouter([
       { path: 'orders', element: <PlaceholderPage title="Orders" /> },
       { path: 'customers', element: <CustomersListPage /> },
       { path: 'inventory', element: <InventoryListPage /> },
-      { path: 'providers', element: <PlaceholderPage title="Providers" /> },
+      { path: 'providers', element: <ProvidersListPage /> },
       { path: 'shipping', element: <PlaceholderPage title="Shipping" /> },
       { path: 'payments', element: <PlaceholderPage title="Payments" /> },
       { path: 'notifications', element: <PlaceholderPage title="Notifications" /> },
