@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RetailStore.Api.Features.Users.Domain;
 using RetailStore.SharedKernel.Domain.ValueObjects;
@@ -31,12 +32,24 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.RefreshTokenHash).HasMaxLength(128);
         builder.Property(u => u.Version).IsConcurrencyToken();
 
-        // Role IDs stored as JSON array
+        // Role IDs stored as JSON array.
+        // ValueComparer is REQUIRED so EF Core detects list mutations
+        // (e.g. AssignRole / RevokeRole) — without it, _roleIds.Add(...) is
+        // not noticed by the change tracker and never persisted.
+        var roleIdsComparer = new ValueComparer<IReadOnlyCollection<Guid>>(
+            (a, b) => (a == null && b == null) ||
+                      (a != null && b != null && a.SequenceEqual(b)),
+            c => c == null
+                ? 0
+                : c.Aggregate(0, (h, v) => HashCode.Combine(h, v.GetHashCode())),
+            c => (IReadOnlyCollection<Guid>)c.ToList());
+
         builder.Property(u => u.RoleIds)
             .HasConversion(
                 v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
                 v => System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(v, (System.Text.Json.JsonSerializerOptions?)null)!)
-            .HasColumnType("nvarchar(max)");
+            .HasColumnType("nvarchar(max)")
+            .Metadata.SetValueComparer(roleIdsComparer);
 
         builder.Ignore(u => u.DomainEvents);
     }
