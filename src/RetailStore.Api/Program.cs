@@ -124,6 +124,10 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// ─── Database Seed (roles + admin user assignment) ────────
+var seederLogger = app.Services.GetRequiredService<ILogger<Program>>();
+await DatabaseSeeder.SeedAsync(app.Services, seederLogger);
+
 app.UseMiddleware<CorrelationMiddleware>();
 app.UseExceptionHandler();
 app.UseRateLimiter();

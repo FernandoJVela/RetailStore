@@ -37,12 +37,14 @@ public sealed class Permission : ValueObject
 
     /// <summary>
     /// Checks if this permission satisfies a required permission.
-    /// A wildcard (products:*) satisfies any action (products:write).
+    /// "*:*" satisfies any permission (super-admin).
+    /// "resource:*" satisfies any action on that resource.
     /// </summary>
     public bool Satisfies(Permission required)
     {
+        if (Resource == "*") return true;             // super-admin wildcard
         if (Resource != required.Resource) return false;
-        if (Action == "*") return true;
+        if (Action == "*") return true;               // resource-scoped wildcard
         return Action == required.Action;
     }
 
