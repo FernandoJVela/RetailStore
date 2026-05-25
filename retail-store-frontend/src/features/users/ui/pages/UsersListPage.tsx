@@ -5,6 +5,7 @@ import { Button, Card, Spinner, EmptyState } from '@shared/components/ui';
 import { useUsers } from '@features/users/application/hooks/useUsersQueries';
 import { UserRow } from '@features/users/ui/components/UserRow';
 import { RoleManagementModal } from '@features/users/ui/components/RoleManagementModal';
+import { CreateUserModal } from '@features/users/ui/components/CreateUserModal';
 import type { User } from '@features/users/domain/users.model';
  
 export function UsersListPage() {
@@ -13,6 +14,7 @@ export function UsersListPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
  
   const filtered = users?.filter((u) => {
     const matchesSearch =
@@ -33,7 +35,7 @@ export function UsersListPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t('users.title')}</h1>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">{t('users.subtitle')}</p>
         </div>
-        <Button>
+        <Button onClick={() => setShowCreate(true)}>
           <UserPlus className="h-4 w-4" />
           {t('users.createUser')}
         </Button>
@@ -106,6 +108,9 @@ export function UsersListPage() {
         )}
       </Card>
  
+      {/* Create User Modal */}
+      <CreateUserModal isOpen={showCreate} onClose={() => setShowCreate(false)} />
+
       {/* Role Management Modal */}
       {selectedUser && (
         <RoleManagementModal

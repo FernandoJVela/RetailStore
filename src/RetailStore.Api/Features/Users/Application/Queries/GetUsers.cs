@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RetailStore.Api.Features.Users.Domain;
 using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
+
 namespace RetailStore.Api.Features.Users.Application.Queries;
 
 public sealed record GetUsersQuery() : IQuery<IReadOnlyList<UserDto>>;

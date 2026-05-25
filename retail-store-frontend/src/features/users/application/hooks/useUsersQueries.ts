@@ -65,8 +65,10 @@ export function useLogin() {
 }
  
 export function useRegister() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: RegisterData) => usersRepository.register(data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: KEYS.users }); },
   });
 }
  
