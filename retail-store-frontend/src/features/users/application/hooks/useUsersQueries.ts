@@ -89,17 +89,17 @@ export function useReactivateUser() {
 export function useAssignRole() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ userId, roleName }: { userId: string; roleName: string }) =>
-      usersRepository.assignRole(userId, roleName),
+    mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) =>
+      usersRepository.assignRole(userId, roleId),
     onSuccess: () => { qc.invalidateQueries({ queryKey: KEYS.users }); },
   });
 }
- 
+
 export function useRevokeRole() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ userId, roleName }: { userId: string; roleName: string }) =>
-      usersRepository.revokeRole(userId, roleName),
+    mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) =>
+      usersRepository.revokeRole(userId, roleId),
     onSuccess: () => { qc.invalidateQueries({ queryKey: KEYS.users }); },
   });
 }

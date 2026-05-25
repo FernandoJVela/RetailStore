@@ -47,4 +47,8 @@ public sealed class UsersController(ISender sender) : ControllerBase
     [HttpPut("{id:guid}/deactivate"), Authorize]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
     { await sender.Send(new DeactivateUserCommand(id), ct); return NoContent(); }
+
+    [HttpPut("{id:guid}/reactivate"), Authorize]
+    public async Task<IActionResult> Reactivate(Guid id, CancellationToken ct)
+    { await sender.Send(new ReactivateUserCommand(id), ct); return NoContent(); }
 }

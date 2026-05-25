@@ -3,8 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using RetailStore.Api.Features.Users.Domain;
 using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
-using RetailStore.SharedKernel.Domain;
-
 namespace RetailStore.Api.Features.Users.Application.Queries;
 
 public sealed record GetRolesQuery() : IQuery<IReadOnlyList<RoleDto>>;
@@ -27,10 +25,6 @@ public sealed class GetRolesHandler
             .Select(u => new RoleDto(
                 u.Id, u.Name, u.Description, u.IsSystem, u.Permissions, u.CreatedAt))
             .ToListAsync(ct);
-
-        // Throws DomainException with 404 mapping automatically
-        if (roles.Count == 0)
-            throw new DomainException(UserErrors.NotFound());
 
         return roles;
     }

@@ -36,14 +36,14 @@ export function RoleManagementModal({ user, isOpen, onClose }: RoleManagementMod
   const assignRole = useAssignRole();
   const revokeRole = useRevokeRole();
  
-  const handleAssign = async (roleName: string) => {
-    await assignRole.mutateAsync({ userId: user.id, roleName });
+  const handleAssign = async (roleId: string) => {
+    await assignRole.mutateAsync({ userId: user.id, roleId });
   };
- 
-  const handleRevoke = async (roleName: string) => {
-    await revokeRole.mutateAsync({ userId: user.id, roleName });
+
+  const handleRevoke = async (roleId: string) => {
+    await revokeRole.mutateAsync({ userId: user.id, roleId });
   };
- 
+
   const userHasRole = (roleName: string) => user.roles.includes(roleName);
  
   return (
@@ -94,7 +94,7 @@ export function RoleManagementModal({ user, isOpen, onClose }: RoleManagementMod
                     <Button
                       variant="danger"
                       size="sm"
-                      onClick={() => handleRevoke(role.name)}
+                      onClick={() => handleRevoke(role.id)}
                       loading={revokeRole.isPending}
                     >
                       <ShieldX className="h-4 w-4" />
@@ -104,7 +104,7 @@ export function RoleManagementModal({ user, isOpen, onClose }: RoleManagementMod
                     <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => handleAssign(role.name)}
+                      onClick={() => handleAssign(role.id)}
                       loading={assignRole.isPending}
                     >
                       <ShieldCheck className="h-4 w-4" />

@@ -42,9 +42,5 @@ export interface RoleDto {
 }
  
 export interface AssignRoleRequestDto {
-  roleName: string;
-}
- 
-export interface RevokeRoleRequestDto {
-  roleName: string;
+  roleId: string;
 }

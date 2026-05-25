@@ -66,11 +66,11 @@ export const usersRepository = {
     await usersApi.reactivate(id);
   },
  
-  async assignRole(userId: string, roleName: string): Promise<void> {
-    await usersApi.assignRole(userId, { roleName });
+  async assignRole(userId: string, roleId: string): Promise<void> {
+    await usersApi.assignRole(userId, roleId);
   },
- 
-  async revokeRole(userId: string, roleName: string): Promise<void> {
-    await usersApi.revokeRole(userId, { roleName });
+
+  async revokeRole(userId: string, roleId: string): Promise<void> {
+    await usersApi.revokeRole(userId, roleId);
   },
 };

@@ -10,7 +10,8 @@ namespace RetailStore.Api.Features.Users.Application.Queries;
 public sealed record GetUserByIdQuery(Guid Id) : IQuery<UserDto>;
 
 public sealed record UserDto(
-    Guid Id, string Username, string Email, DateTime? LastLoginAt, bool IsActive);
+    Guid Id, string Username, string Email, DateTime? LastLoginAt, bool IsActive,
+    IReadOnlyList<Guid> RoleIds);
 
 public sealed class GetUserByIdHandler
     : IRequestHandler<GetUserByIdQuery, UserDto>
@@ -24,15 +25,12 @@ public sealed class GetUserByIdHandler
     {
         var user = await _db.Set<User>()
             .AsNoTracking()
-            .Where(u => u.Id == query.Id)
-            .Select(u => new UserDto(
-                u.Id, u.Username, u.Email, u.LastLoginAt, u.IsActive))
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(u => u.Id == query.Id, ct);
 
-        // Throws DomainException with 404 mapping automatically
         if (user is null)
             throw new DomainException(UserErrors.NotFound(query.Id));
 
-        return user;
+        return new UserDto(user.Id, user.Username, user.Email, user.LastLoginAt, user.IsActive,
+            user.RoleIds.ToList());
     }
 }

@@ -3,8 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using RetailStore.Api.Features.Users.Domain;
 using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
-using RetailStore.SharedKernel.Domain;
-
 namespace RetailStore.Api.Features.Users.Application.Queries;
 
 public sealed record GetUsersQuery() : IQuery<IReadOnlyList<UserDto>>;
@@ -21,14 +19,11 @@ public sealed class GetUsersHandler
     {
         var users = await _db.Set<User>()
             .AsNoTracking()
-            .Select(u => new UserDto(
-                u.Id, u.Username, u.Email, u.LastLoginAt, u.IsActive))
             .ToListAsync(ct);
 
-        // Throws DomainException with 404 mapping automatically
-        if (users.Count == 0)
-            throw new DomainException(UserErrors.NotFound());
-
-        return users;
+        return users.Select(u => new UserDto(
+                u.Id, u.Username, u.Email, u.LastLoginAt, u.IsActive,
+                u.RoleIds.ToList()))
+            .ToList();
     }
 }

@@ -1,7 +1,7 @@
 import { httpClient } from '@shared/api/http-client';
 import type {
   LoginRequestDto, LoginResponseDto, RegisterRequestDto,
-  UserDto, RoleDto, AssignRoleRequestDto,
+  UserDto, RoleDto,
 } from '../index';
  
 const BASE = '/users';
@@ -32,9 +32,9 @@ export const usersApi = {
   getRoles: () =>
     httpClient.get<RoleDto[]>(`${BASE}/roles`),
  
-  assignRole: (userId: string, data: AssignRoleRequestDto) =>
-    httpClient.post(`${BASE}/${userId}/roles`, data),
- 
-  revokeRole: (userId: string, data: AssignRoleRequestDto) =>
-    httpClient.delete(`${BASE}/${userId}/roles`, { data }),
+  assignRole: (userId: string, roleId: string) =>
+    httpClient.post(`${BASE}/${userId}/roles`, { roleId }),
+
+  revokeRole: (userId: string, roleId: string) =>
+    httpClient.delete(`${BASE}/${userId}/roles/${roleId}`),
 };
