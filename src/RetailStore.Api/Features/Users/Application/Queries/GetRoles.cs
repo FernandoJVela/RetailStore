@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using RetailStore.Api.Features.Users.Domain;
 using RetailStore.Infrastructure.Persistence;
 using RetailStore.SharedKernel.Application;
+using RetailStore.SharedKernel.Domain;
+
 namespace RetailStore.Api.Features.Users.Application.Queries;
 
 public sealed record GetRolesQuery() : IQuery<IReadOnlyList<RoleDto>>;
