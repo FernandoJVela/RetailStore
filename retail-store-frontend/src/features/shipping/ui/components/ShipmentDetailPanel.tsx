@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'react-i18next';
-import { X, Truck, MapPin, Package, CheckCircle, XCircle } from 'lucide-react';
-import { Button, Input, Badge, Spinner } from '@shared/components/ui';
+import { Truck, MapPin, Package, CheckCircle, XCircle } from 'lucide-react';
+import { Button, Input, Textarea, Badge, Spinner, SlidePanel, Alert, DetailSection } from '@shared/components/ui';
 import { getApiErrorMessage } from '@shared/api/http-client';
 import { formatDate, formatDateTime } from '@shared/lib/utils';
 import { cn } from '@shared/lib/utils';
@@ -76,32 +76,17 @@ export function ShipmentDetailPanel({ shipmentId, isOpen, onClose }: ShipmentDet
     } catch (err) { setApiError(getApiErrorMessage(err)); }
   };
  
-  if (!isOpen) return null;
- 
   // Progress tracker index
   const currentStepIdx = shipment ? STATUS_STEPS.indexOf(shipment.status as ShipmentStatus) : -1;
   const isFinalBad = shipment && ['Failed', 'Cancelled', 'Returned'].includes(shipment.status);
- 
+
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg overflow-y-auto bg-[var(--bg-secondary)] shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-secondary)] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Shipment Details</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
- 
-        {isLoading ? (
-          <Spinner />
-        ) : shipment ? (
-          <div className="p-6 space-y-6">
-            {apiError && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800 p-3">
-                <p className="text-sm text-red-700 dark:text-red-400">{apiError}</p>
-              </div>
-            )}
+    <SlidePanel isOpen={isOpen} onClose={onClose} title="Shipment Details">
+      {isLoading ? (
+        <Spinner />
+      ) : shipment ? (
+        <div className="p-6 space-y-6">
+            {apiError && <Alert message={apiError} />}
  
             {/* ─── Progress Tracker ──────────────────────── */}
             <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
@@ -135,10 +120,7 @@ export function ShipmentDetailPanel({ shipmentId, isOpen, onClose }: ShipmentDet
             </section>
  
             {/* ─── Carrier & Tracking ────────────────────── */}
-            <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Truck className="h-4 w-4" /> Carrier & Tracking
-              </h3>
+            <DetailSection title="Carrier & Tracking" icon={Truck}>
  
               {shipment.hasCarrier ? (
                 <div className="space-y-2">
@@ -164,21 +146,15 @@ export function ShipmentDetailPanel({ shipmentId, isOpen, onClose }: ShipmentDet
                   <Button size="sm" variant="outline" onClick={() => setShowCarrierForm(true)}>Assign Carrier</Button>
                 </div>
               )}
-            </section>
- 
+            </DetailSection>
+
             {/* ─── Address ───────────────────────────────── */}
-            <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3 flex items-center gap-2">
-                <MapPin className="h-4 w-4" /> Delivery Address
-              </h3>
+            <DetailSection title="Delivery Address" icon={MapPin}>
               <p className="text-sm text-[var(--text-secondary)]">{shipment.address.fullAddress}</p>
-            </section>
- 
+            </DetailSection>
+
             {/* ─── Items ─────────────────────────────────── */}
-            <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Package className="h-4 w-4" /> Items ({shipment.items.length})
-              </h3>
+            <DetailSection title={`Items (${shipment.items.length})`} icon={Package}>
               <div className="space-y-2">
                 {shipment.items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between rounded-lg bg-[var(--bg-secondary)] px-3 py-2 border border-[var(--border-color)]">
@@ -195,11 +171,10 @@ export function ShipmentDetailPanel({ shipmentId, isOpen, onClose }: ShipmentDet
                   <p className="text-xs text-[var(--text-muted)] text-right pt-1">Total weight: {shipment.totalWeightKg}kg</p>
                 )}
               </div>
-            </section>
- 
+            </DetailSection>
+
             {/* ─── Actions ───────────────────────────────── */}
-            <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3">Actions</h3>
+            <DetailSection title="Actions">
               <div className="flex flex-wrap gap-2">
                 {shipment.status === 'Processing' && shipment.hasCarrier && (
                   <Button size="sm" onClick={() => handleLifecycle('ship')} loading={shipMut.isPending}>
@@ -233,32 +208,29 @@ export function ShipmentDetailPanel({ shipmentId, isOpen, onClose }: ShipmentDet
                   <p className="text-sm font-medium text-[var(--text-primary)]">
                     {showReasonForm === 'fail' ? 'Reason for failure' : 'Reason for cancellation'}
                   </p>
-                  <textarea
+                  <Textarea
                     rows={2}
                     placeholder="Describe the reason..."
-                    className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-primary-500 focus:outline-none resize-none"
+                    className="bg-[var(--bg-primary)]"
+                    error={reasonForm.formState.errors.reason?.message}
                     {...reasonForm.register('reason')}
                   />
-                  {reasonForm.formState.errors.reason && (
-                    <p className="text-xs text-danger">{reasonForm.formState.errors.reason.message}</p>
-                  )}
                   <div className="flex justify-end gap-2">
                     <Button variant="secondary" size="sm" type="button" onClick={() => { setShowReasonForm(null); reasonForm.reset(); }}>{t('common.cancel')}</Button>
                     <Button size="sm" variant="danger" type="submit" loading={failMut.isPending || cancelMut.isPending}>{t('common.confirm')}</Button>
                   </div>
                 </form>
               )}
-            </section>
- 
+            </DetailSection>
+
             {/* Timestamps */}
             <div className="text-xs text-[var(--text-muted)] space-y-1">
               <p>Created: {formatDateTime(shipment.createdAt)}</p>
               {shipment.shippedAt && <p>Shipped: {formatDateTime(shipment.shippedAt)}</p>}
               {shipment.deliveredAt && <p>Delivered: {formatDateTime(shipment.deliveredAt)}</p>}
             </div>
-          </div>
-        ) : null}
-      </div>
-    </>
+        </div>
+      ) : null}
+    </SlidePanel>
   );
 }

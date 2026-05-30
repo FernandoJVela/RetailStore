@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'react-i18next';
-import { X, Pencil, DollarSign, Tag, FileText } from 'lucide-react';
-import { Button, Input, Badge, Spinner } from '@shared/components/ui';
+import { DollarSign, Tag, FileText } from 'lucide-react';
+import { Button, Input, Textarea, Select, Badge, Spinner, SlidePanel, Alert, DetailSection } from '@shared/components/ui';
 import { getApiErrorMessage } from '@shared/api/http-client';
 import { formatDate } from '@shared/lib/utils';
 import { useProduct, useUpdateProductDetails, useUpdateProductPrice } from '@features/products/application/hooks/useProductsQueries';
@@ -58,61 +58,35 @@ export function ProductDetailPanel({ productId, isOpen, onClose }: ProductDetail
     } catch (err) { setApiError(getApiErrorMessage(err)); }
   };
  
-  if (!isOpen) return null;
- 
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg overflow-y-auto bg-[var(--bg-secondary)] shadow-2xl">
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-secondary)] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Product Details</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
- 
-        {isLoading ? (
-          <Spinner />
-        ) : product ? (
-          <div className="p-6 space-y-6">
-            {apiError && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800 p-3">
-                <p className="text-sm text-red-700 dark:text-red-400">{apiError}</p>
-              </div>
-            )}
+    <SlidePanel isOpen={isOpen} onClose={onClose} title="Product Details">
+      {isLoading ? (
+        <Spinner />
+      ) : product ? (
+        <div className="p-6 space-y-6">
+            {apiError && <Alert message={apiError} />}
  
             {/* ─── Product Info Section ───────────────────── */}
-            <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                  <Tag className="h-4 w-4" /> Details
-                </h3>
-                <button onClick={() => setEditMode(editMode === 'details' ? 'none' : 'details')} className="text-primary-600 hover:text-primary-500">
-                  <Pencil className="h-4 w-4" />
-                </button>
-              </div>
+            <DetailSection
+              title="Details"
+              icon={Tag}
+              onEdit={() => setEditMode(editMode === 'details' ? 'none' : 'details')}
+            >
  
               {editMode === 'details' ? (
                 <form onSubmit={detailsForm.handleSubmit(handleDetailsSave)} className="space-y-3">
                   <Input label="Name" error={detailsForm.formState.errors.name?.message} {...detailsForm.register('name')} />
-                  <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-[var(--text-secondary)]">Category</label>
-                    <select
-                      className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] focus:border-primary-500 focus:outline-none"
-                      {...detailsForm.register('category')}
-                    >
-                      {PRODUCT_CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-[var(--text-secondary)]">Description</label>
-                    <textarea
-                      rows={3}
-                      className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] focus:border-primary-500 focus:outline-none resize-none"
-                      {...detailsForm.register('description')}
-                    />
-                  </div>
+                  <Select
+                    label="Category"
+                    {...detailsForm.register('category')}
+                  >
+                    {PRODUCT_CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+                  </Select>
+                  <Textarea
+                    label="Description"
+                    rows={3}
+                    {...detailsForm.register('description')}
+                  />
                   <div className="flex justify-end gap-2 pt-1">
                     <Button variant="secondary" size="sm" type="button" onClick={() => setEditMode('none')}>{t('common.cancel')}</Button>
                     <Button size="sm" type="submit" loading={detailsMutation.isPending}>{t('common.save')}</Button>
@@ -140,18 +114,14 @@ export function ProductDetailPanel({ productId, isOpen, onClose }: ProductDetail
                   </p>
                 </div>
               )}
-            </section>
- 
+            </DetailSection>
+
             {/* ─── Price Section ──────────────────────────── */}
-            <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" /> Pricing
-                </h3>
-                <button onClick={() => setEditMode(editMode === 'price' ? 'none' : 'price')} className="text-primary-600 hover:text-primary-500">
-                  <Pencil className="h-4 w-4" />
-                </button>
-              </div>
+            <DetailSection
+              title="Pricing"
+              icon={DollarSign}
+              onEdit={() => setEditMode(editMode === 'price' ? 'none' : 'price')}
+            >
  
               {editMode === 'price' ? (
                 <form onSubmit={priceForm.handleSubmit(handlePriceSave)} className="space-y-3">
@@ -167,10 +137,9 @@ export function ProductDetailPanel({ productId, isOpen, onClose }: ProductDetail
               ) : (
                 <p className="text-3xl font-bold text-[var(--text-primary)]">{product.formattedPrice}</p>
               )}
-            </section>
-          </div>
-        ) : null}
-      </div>
-    </>
+            </DetailSection>
+        </div>
+      ) : null}
+    </SlidePanel>
   );
 }

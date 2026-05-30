@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'react-i18next';
 import { Plus, Minus, ArrowLeftRight, Settings2 } from 'lucide-react';
-import { Modal, Button, Input } from '@shared/components/ui';
+import { Modal, Button, Input, Textarea, Alert } from '@shared/components/ui';
 import { getApiErrorMessage } from '@shared/api/http-client';
 import {
   useAddStock, useRemoveStock, useAdjustStock, useUpdateThreshold,
@@ -106,11 +106,7 @@ export function StockActionModal({ item, action, isOpen, onClose }: StockActionM
         </div>
       </div>
  
-      {apiError && (
-        <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800 p-3">
-          <p className="text-sm text-red-700 dark:text-red-400">{apiError}</p>
-        </div>
-      )}
+      {apiError && <Alert message={apiError} className="mb-4" />}
  
       {/* Form content based on action */}
       <div className="space-y-4">
@@ -133,18 +129,13 @@ export function StockActionModal({ item, action, isOpen, onClose }: StockActionM
               error={adjustForm.formState.errors.newQuantity?.message}
               {...adjustForm.register('newQuantity', { valueAsNumber: true })}
             />
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-[var(--text-secondary)]">Reason for adjustment</label>
-              <textarea
-                rows={2}
-                placeholder="e.g., Physical count correction, damage write-off..."
-                className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-primary-500 focus:outline-none resize-none"
-                {...adjustForm.register('reason')}
-              />
-              {adjustForm.formState.errors.reason && (
-                <p className="text-xs text-danger">{adjustForm.formState.errors.reason.message}</p>
-              )}
-            </div>
+            <Textarea
+              label="Reason for adjustment"
+              rows={2}
+              placeholder="e.g., Physical count correction, damage write-off..."
+              error={adjustForm.formState.errors.reason?.message}
+              {...adjustForm.register('reason')}
+            />
           </>
         )}
  

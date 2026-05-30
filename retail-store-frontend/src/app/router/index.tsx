@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MainLayout } from '@app/layouts/MainLayout';
 import { AuthGuard } from '@shared/components/navigation/AuthGuard';
 import { RouteErrorPage } from '@shared/components/feedback/ErrorBoundary';
@@ -43,10 +44,11 @@ import { DashboardPage } from '@features/dashboard/ui/pages/DashboardPage';
  
 // ─── Placeholder pages (to be built per module later) ───────
 function PlaceholderPage({ title }: { title: string }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center py-24">
       <h1 className="text-2xl font-bold text-[var(--text-primary)]">{title}</h1>
-      <p className="mt-2 text-[var(--text-secondary)]">This module will be built next.</p>
+      <p className="mt-2 text-[var(--text-secondary)]">{t('errors.modulePlaceholder')}</p>
     </div>
   );
 }

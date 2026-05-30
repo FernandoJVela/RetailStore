@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Modal, Spinner } from '@shared/components/ui';
-import { cn } from '@shared/lib/utils';
+import { Modal, Spinner, Toggle } from '@shared/components/ui';
 import { useNotificationPreferences, useUpdatePreference } from '@features/notifications/application/hooks/useNotificationsQueries';
 import type { NotificationCategory, NotificationChannel } from '@features/notifications';
  
@@ -51,20 +50,10 @@ export function PreferencesModal({ recipientId, isOpen, onClose }: PreferencesMo
                     const enabled = isEnabled(cat, ch);
                     return (
                       <td key={ch} className="py-3 text-center">
-                        <button
-                          onClick={() => handleToggle(cat, ch)}
-                          className={cn(
-                            'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-                            enabled ? 'bg-primary-600' : 'bg-[var(--bg-tertiary)]'
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform',
-                              enabled ? 'translate-x-5' : 'translate-x-0'
-                            )}
-                          />
-                        </button>
+                        <Toggle
+                          checked={enabled}
+                          onChange={() => handleToggle(cat, ch)}
+                        />
                       </td>
                     );
                   })}

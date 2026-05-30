@@ -1,16 +1,18 @@
+import { useTranslation } from 'react-i18next';
 import { Card, Spinner } from '@shared/components/ui';
 import { useRevenueByPeriod } from '@features/reports/application/hooks/useReportsQueries';
- 
+
 export function RevenueTrendChart() {
+  const { t } = useTranslation();
   const { data, isLoading } = useRevenueByPeriod(12);
- 
-  if (isLoading) return <Card title="Revenue Trend"><Spinner /></Card>;
+
+  if (isLoading) return <Card title={t('reports.monthlyRevenue')}><Spinner /></Card>;
   if (!data?.length) return null;
- 
+
   const maxRevenue = Math.max(...data.map((d) => d.revenue));
- 
+
   return (
-    <Card title="Monthly Revenue" subtitle="Last 12 months">
+    <Card title={t('reports.monthlyRevenue')} subtitle={t('reports.last12Months')}>
       <div className="flex items-end gap-2 h-48">
         {data.map((item) => {
           const heightPercent = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0;
@@ -19,7 +21,7 @@ export function RevenueTrendChart() {
               {/* Tooltip on hover */}
               <div className="hidden group-hover:block absolute -mt-16 rounded-lg bg-[var(--sidebar-bg)] text-white px-3 py-2 text-xs shadow-lg z-10">
                 <p className="font-semibold">{item.formattedRevenue}</p>
-                <p>{item.orderCount} orders · {item.itemsSold} items</p>
+                <p>{t('reports.ordersItems', { orders: item.orderCount, items: item.itemsSold })}</p>
               </div>
               {/* Bar */}
               <div

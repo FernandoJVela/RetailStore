@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, RotateCcw, Home } from 'lucide-react';
  
 interface ErrorBoundaryProps {
@@ -56,6 +57,7 @@ export function ErrorFallback({
   error?: Error | null;
   onReset?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] px-6">
       <div className="w-full max-w-lg text-center">
@@ -66,10 +68,10 @@ export function ErrorFallback({
  
         {/* Title */}
         <h1 className="text-2xl font-bold text-[var(--text-primary)]">
-          Something went wrong
+          {t('errors.somethingWentWrong')}
         </h1>
         <p className="mt-2 text-[var(--text-secondary)]">
-          An unexpected error occurred. Our team has been notified.
+          {t('errors.unexpectedError')}
         </p>
  
         {/* Error details (dev only) */}
@@ -94,7 +96,7 @@ export function ErrorFallback({
               className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
             >
               <RotateCcw className="h-4 w-4" />
-              Try Again
+              {t('common.tryAgain')}
             </button>
           )}
           <a
@@ -102,7 +104,7 @@ export function ErrorFallback({
             className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-5 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
           >
             <Home className="h-4 w-4" />
-            Go Home
+            {t('common.goHome')}
           </a>
         </div>
       </div>
@@ -115,6 +117,7 @@ export function ErrorFallback({
  * Shows a 404-style page for unmatched routes or route-level errors.
  */
 export function RouteErrorPage() {
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] px-6">
       <div className="w-full max-w-lg text-center">
@@ -123,14 +126,14 @@ export function RouteErrorPage() {
         </div>
         <h1 className="text-5xl font-bold text-[var(--text-primary)]">404</h1>
         <p className="mt-3 text-lg text-[var(--text-secondary)]">
-          This page doesn't exist or you don't have access.
+          {t('errors.pageNotFound')}
         </p>
         <a
           href="/"
           className="mt-8 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
         >
           <Home className="h-4 w-4" />
-          Back to Dashboard
+          {t('common.backToDashboard')}
         </a>
       </div>
     </div>

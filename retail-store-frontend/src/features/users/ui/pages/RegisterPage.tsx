@@ -3,7 +3,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Store } from 'lucide-react';
-import { Button, Input } from '@shared/components/ui';
+import { Button, Input, Alert } from '@shared/components/ui';
 import { getApiErrorMessage } from '@shared/api/http-client';
 import { useRegister, registerSchema, type RegisterFormData } from '@features/users';
 import { useState } from 'react';
@@ -36,17 +36,17 @@ export function RegisterPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600">
             <Store className="h-6 w-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-white tracking-tight">RetailStore</span>
+          <span className="text-2xl font-bold text-white tracking-tight">{t('common.appName')}</span>
         </div>
         <div>
-          <h1 className="text-4xl font-bold text-white leading-tight">
-            Join RetailStore<br />Management Platform
+          <h1 className="text-4xl font-bold text-white leading-tight" style={{ whiteSpace: 'pre-line' }}>
+            {t('auth.brandingRegisterTitle')}
           </h1>
           <p className="mt-4 text-lg text-primary-300 max-w-md">
-            Create your account to access the full retail management suite.
+            {t('auth.brandingRegisterDescription')}
           </p>
         </div>
-        <p className="text-sm text-primary-400">© 2026 RetailStore. Built with .NET 10 + React.</p>
+        <p className="text-sm text-primary-400">{t('auth.copyright')}</p>
       </div>
  
       {/* Right panel */}
@@ -57,11 +57,7 @@ export function RegisterPage() {
             <p className="mt-2 text-[var(--text-secondary)]">{t('auth.registerSubtitle')}</p>
           </div>
  
-          {apiError && (
-            <div className="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
-              <p className="text-sm text-red-700 dark:text-red-400">{apiError}</p>
-            </div>
-          )}
+          {apiError && <Alert message={apiError} className="mb-6" />}
  
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <Input

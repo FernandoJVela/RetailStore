@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'react-i18next';
-import { X, CheckCircle, XCircle, Package, DollarSign, Trash2 } from 'lucide-react';
-import { Button, Badge, Spinner } from '@shared/components/ui';
+import { CheckCircle, XCircle, Package, DollarSign, Trash2 } from 'lucide-react';
+import { Button, Badge, Spinner, SlidePanel, Textarea, Alert } from '@shared/components/ui';
 import { getApiErrorMessage } from '@shared/api/http-client';
 import { formatDate, formatDateTime } from '@shared/lib/utils';
 import { cn } from '@shared/lib/utils';
@@ -61,32 +61,17 @@ export function OrderDetailPanel({ orderId, isOpen, onClose }: OrderDetailPanelP
     try { await removeItemMut.mutateAsync({ orderId, productId }); } catch (err) { setApiError(getApiErrorMessage(err)); }
   };
  
-  if (!isOpen) return null;
- 
   const currentStepIdx = order ? ORDER_STATUS_STEPS.indexOf(order.status as OrderStatus) : -1;
   const isCancelled = order?.status === 'Cancelled';
   const isDraft = order?.status === 'Draft';
- 
+
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg overflow-y-auto bg-[var(--bg-secondary)] shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-secondary)] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Order Details</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
- 
-        {isLoading ? (
-          <Spinner />
-        ) : order ? (
-          <div className="p-6 space-y-6">
-            {apiError && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800 p-3">
-                <p className="text-sm text-red-700 dark:text-red-400">{apiError}</p>
-              </div>
-            )}
+    <SlidePanel isOpen={isOpen} onClose={onClose} title="Order Details">
+      {isLoading ? (
+        <Spinner />
+      ) : order ? (
+        <div className="p-6 space-y-6">
+            {apiError && <Alert message={apiError} />}
  
             {/* ─── Status + Total Header ─────────────────── */}
             <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
@@ -183,15 +168,13 @@ export function OrderDetailPanel({ orderId, isOpen, onClose }: OrderDetailPanelP
               {showCancelForm && (
                 <form onSubmit={cancelForm.handleSubmit(handleCancel)} className="mt-4 space-y-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] p-4">
                   <p className="text-sm font-medium text-[var(--text-primary)]">Cancellation reason</p>
-                  <textarea
+                  <Textarea
                     rows={2}
                     placeholder="Customer request, stock issue..."
-                    className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-primary-500 focus:outline-none resize-none"
+                    className="bg-[var(--bg-primary)]"
+                    error={cancelForm.formState.errors.reason?.message}
                     {...cancelForm.register('reason')}
                   />
-                  {cancelForm.formState.errors.reason && (
-                    <p className="text-xs text-danger">{cancelForm.formState.errors.reason.message}</p>
-                  )}
                   <div className="flex justify-end gap-2">
                     <Button variant="secondary" size="sm" type="button" onClick={() => { setShowCancelForm(false); cancelForm.reset(); }}>{t('common.cancel')}</Button>
                     <Button size="sm" variant="danger" type="submit" loading={cancelMut.isPending}>{t('common.confirm')}</Button>
@@ -206,9 +189,8 @@ export function OrderDetailPanel({ orderId, isOpen, onClose }: OrderDetailPanelP
               {order.completedAt && <p>Completed: {formatDateTime(order.completedAt)}</p>}
               {order.cancelledAt && <p>Cancelled: {formatDateTime(order.cancelledAt)}</p>}
             </div>
-          </div>
-        ) : null}
-      </div>
-    </>
+        </div>
+      ) : null}
+    </SlidePanel>
   );
 }

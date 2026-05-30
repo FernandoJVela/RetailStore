@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { X, CheckCircle, Clock, Mail, AlertTriangle } from 'lucide-react';
-import { Button, Badge, Spinner } from '@shared/components/ui';
+import { CheckCircle, Clock, Mail, AlertTriangle } from 'lucide-react';
+import { Button, Badge, Spinner, SlidePanel, DetailSection, Timeline } from '@shared/components/ui';
 import { formatDateTime } from '@shared/lib/utils';
 import { useNotification, useMarkNotificationRead } from '@features/notifications/application/hooks/useNotificationsQueries';
 import { notificationStatusVariant, priorityVariant } from '@features/notifications';
@@ -20,8 +20,6 @@ export function NotificationDetailPanel({ notificationId, isOpen, onClose }: Not
     await markReadMut.mutateAsync(notificationId);
   };
  
-  if (!isOpen) return null;
- 
   const timeline = notification ? [
     { label: 'Created', date: notification.createdAt, icon: Clock },
     { label: 'Sent', date: notification.sentAt, icon: Mail },
@@ -31,20 +29,11 @@ export function NotificationDetailPanel({ notificationId, isOpen, onClose }: Not
   ].filter((e) => e.date !== null) : [];
  
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg overflow-y-auto bg-[var(--bg-secondary)] shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-secondary)] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Notification</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
- 
-        {isLoading ? (
-          <Spinner />
-        ) : notification ? (
-          <div className="p-6 space-y-6">
+    <SlidePanel isOpen={isOpen} onClose={onClose} title="Notification">
+      {isLoading ? (
+        <Spinner />
+      ) : notification ? (
+        <div className="p-6 space-y-6">
             {/* Header */}
             <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
               <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -91,20 +80,9 @@ export function NotificationDetailPanel({ notificationId, isOpen, onClose }: Not
             )}
  
             {/* Timeline */}
-            <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-              <h4 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3">Timeline</h4>
-              <div className="space-y-3">
-                {timeline.map((event, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <event.icon className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
-                    <span className="text-sm font-medium text-[var(--text-primary)] flex-1">{event.label}</span>
-                    <span className="text-xs text-[var(--text-muted)] tabular-nums">
-                      {event.date ? formatDateTime(event.date) : ''}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <DetailSection title="Timeline">
+              <Timeline events={timeline} />
+            </DetailSection>
  
             {/* Reference */}
             {notification.referenceType && (
@@ -112,9 +90,8 @@ export function NotificationDetailPanel({ notificationId, isOpen, onClose }: Not
                 Reference: {notification.referenceType} {notification.referenceId?.substring(0, 8)}
               </div>
             )}
-          </div>
-        ) : null}
-      </div>
-    </>
+        </div>
+      ) : null}
+    </SlidePanel>
   );
 }

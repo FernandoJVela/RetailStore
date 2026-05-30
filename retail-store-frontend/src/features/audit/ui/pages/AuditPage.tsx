@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shield, Search, AlertTriangle, BarChart3, Users } from 'lucide-react';
-import { Card, Spinner, EmptyState } from '@shared/components/ui';
+import { Card, Spinner, EmptyState, Avatar, PageHeader } from '@shared/components/ui';
 import { cn } from '@shared/lib/utils';
 import { formatDateTime } from '@shared/lib/utils';
 import {
@@ -10,31 +10,28 @@ import {
 import { AUDIT_MODULES } from '@features/audit';
 import { AuditRow } from '@features/audit';
 import { AuditDetailPanel } from '@features/audit';
- 
+
 type Tab = 'log' | 'failures' | 'modules' | 'users';
- 
+
 export function AuditPage() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('log');
   const [moduleFilter, setModuleFilter] = useState<string>('');
   const [outcomeFilter, setOutcomeFilter] = useState<string>('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
- 
+
   const tabs: { key: Tab; label: string; icon: typeof Shield }[] = [
-    { key: 'log', label: 'Activity Log', icon: Search },
-    { key: 'failures', label: 'Failures', icon: AlertTriangle },
-    { key: 'modules', label: 'By Module', icon: BarChart3 },
-    { key: 'users', label: 'By User', icon: Users },
+    { key: 'log', label: t('audit.tab_log'), icon: Search },
+    { key: 'failures', label: t('audit.tab_failures'), icon: AlertTriangle },
+    { key: 'modules', label: t('audit.tab_modules'), icon: BarChart3 },
+    { key: 'users', label: t('audit.tab_users'), icon: Users },
   ];
- 
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t('nav.audit')}</h1>
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">Track who did what, when, and the outcome</p>
-      </div>
- 
+      <PageHeader title={t('nav.audit')} subtitle={t('audit.subtitle')} />
+
       {/* Tabs */}
       <div className="flex gap-1 rounded-lg bg-[var(--bg-tertiary)] p-1">
         {tabs.map(({ key, label, icon: Icon }) => (
@@ -53,7 +50,7 @@ export function AuditPage() {
           </button>
         ))}
       </div>
- 
+
       {/* Tab content */}
       {activeTab === 'log' && (
         <LogTab
@@ -67,7 +64,7 @@ export function AuditPage() {
       {activeTab === 'failures' && <FailuresTab onSelect={setSelectedId} />}
       {activeTab === 'modules' && <ModulesTab />}
       {activeTab === 'users' && <UsersTab />}
- 
+
       {/* Detail panel */}
       {selectedId && (
         <AuditDetailPanel
@@ -79,7 +76,7 @@ export function AuditPage() {
     </div>
   );
 }
- 
+
 // ═══════════════════════════════════════════════════════════
 // LOG TAB
 // ═══════════════════════════════════════════════════════════
@@ -88,12 +85,13 @@ function LogTab({ moduleFilter, outcomeFilter, onModuleChange, onOutcomeChange, 
   onModuleChange: (v: string) => void; onOutcomeChange: (v: string) => void;
   onSelect: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const { data, isLoading } = useAuditSearch({
     module: moduleFilter || undefined,
     outcome: outcomeFilter || undefined,
     limit: 100,
   });
- 
+
   return (
     <>
       {/* Filters */}
@@ -104,7 +102,7 @@ function LogTab({ moduleFilter, outcomeFilter, onModuleChange, onOutcomeChange, 
             onChange={(e) => onModuleChange(e.target.value)}
             className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-primary-500 focus:outline-none"
           >
-            <option value="">All Modules</option>
+            <option value="">{t('audit.allModules')}</option>
             {AUDIT_MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
           <select
@@ -112,31 +110,31 @@ function LogTab({ moduleFilter, outcomeFilter, onModuleChange, onOutcomeChange, 
             onChange={(e) => onOutcomeChange(e.target.value)}
             className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-primary-500 focus:outline-none"
           >
-            <option value="">All Outcomes</option>
-            <option value="Success">Success</option>
-            <option value="Failure">Failure</option>
-            <option value="Error">Error</option>
+            <option value="">{t('audit.allOutcomes')}</option>
+            <option value="Success">{t('audit.outcome_success')}</option>
+            <option value="Failure">{t('audit.outcome_failure')}</option>
+            <option value="Error">{t('audit.outcome_error')}</option>
           </select>
-          <span className="text-xs text-[var(--text-muted)]">{data?.length ?? 0} entries</span>
+          <span className="text-xs text-[var(--text-muted)]">{t('audit.entries', { count: data?.length ?? 0 })}</span>
         </div>
       </Card>
- 
+
       {/* Table */}
       <Card>
         {isLoading ? <Spinner /> : !data?.length ? (
-          <EmptyState icon={<Shield className="h-12 w-12" />} title="No audit entries" description="Actions will appear here as users interact with the system." />
+          <EmptyState icon={<Shield className="h-12 w-12" />} title={t('audit.noEntries')} description={t('audit.noEntriesDesc')} />
         ) : (
           <div className="overflow-x-auto -mx-6">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--border-color)]">
-                  <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Action</th>
-                  <th className="hidden md:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Module</th>
-                  <th className="hidden lg:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Entity</th>
-                  <th className="hidden sm:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">User</th>
-                  <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Result</th>
-                  <th className="hidden lg:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Duration</th>
-                  <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">When</th>
+                  <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_action')}</th>
+                  <th className="hidden md:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_module')}</th>
+                  <th className="hidden lg:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_entity')}</th>
+                  <th className="hidden sm:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_user')}</th>
+                  <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_result')}</th>
+                  <th className="hidden lg:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_duration')}</th>
+                  <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('audit.col_when')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-color)]">
@@ -151,27 +149,28 @@ function LogTab({ moduleFilter, outcomeFilter, onModuleChange, onOutcomeChange, 
     </>
   );
 }
- 
+
 // ═══════════════════════════════════════════════════════════
 // FAILURES TAB
 // ═══════════════════════════════════════════════════════════
 function FailuresTab({ onSelect }: { onSelect: (id: string) => void }) {
+  const { t } = useTranslation();
   const { data, isLoading } = useAuditFailures(50);
- 
+
   return (
-    <Card title="Recent Failures" subtitle="Operations that failed or errored">
+    <Card title={t('audit.recentFailures')} subtitle={t('audit.recentFailuresSubtitle')}>
       {isLoading ? <Spinner /> : !data?.length ? (
-        <EmptyState icon={<AlertTriangle className="h-12 w-12" />} title="No failures" description="All operations completed successfully." />
+        <EmptyState icon={<AlertTriangle className="h-12 w-12" />} title={t('audit.noFailures')} description={t('audit.noFailuresDesc')} />
       ) : (
         <div className="overflow-x-auto -mx-6">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--border-color)]">
-                <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Action</th>
-                <th className="hidden md:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Module</th>
-                <th className="hidden sm:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">User</th>
-                <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Result</th>
-                <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">When</th>
+                <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_action')}</th>
+                <th className="hidden md:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_module')}</th>
+                <th className="hidden sm:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_user')}</th>
+                <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_result')}</th>
+                <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('audit.col_when')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-color)]">
@@ -185,29 +184,30 @@ function FailuresTab({ onSelect }: { onSelect: (id: string) => void }) {
     </Card>
   );
 }
- 
+
 // ═══════════════════════════════════════════════════════════
 // MODULES TAB
 // ═══════════════════════════════════════════════════════════
 function ModulesTab() {
+  const { t } = useTranslation();
   const { data, isLoading } = useModuleActivity();
- 
+
   return (
-    <Card title="Activity by Module" subtitle="Volume, performance, and success rates">
+    <Card title={t('audit.activityByModule')} subtitle={t('audit.activityByModuleSubtitle')}>
       {isLoading ? <Spinner /> : !data?.length ? (
-        <EmptyState icon={<BarChart3 className="h-12 w-12" />} title="No activity data" />
+        <EmptyState icon={<BarChart3 className="h-12 w-12" />} title={t('audit.noActivityData')} />
       ) : (
         <div className="overflow-x-auto -mx-6">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--border-color)]">
-                <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Module</th>
-                <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Actions</th>
-                <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Success</th>
-                <th className="hidden md:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Failed</th>
-                <th className="hidden lg:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Avg Time</th>
-                <th className="hidden lg:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Max Time</th>
-                <th className="hidden sm:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Users</th>
+                <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_module')}</th>
+                <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('common.actions')}</th>
+                <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('audit.col_success')}</th>
+                <th className="hidden md:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('audit.col_failed')}</th>
+                <th className="hidden lg:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('audit.col_avgTime')}</th>
+                <th className="hidden lg:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('audit.col_maxTime')}</th>
+                <th className="hidden sm:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('audit.col_users')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-color)]">
@@ -239,27 +239,28 @@ function ModulesTab() {
     </Card>
   );
 }
- 
+
 // ═══════════════════════════════════════════════════════════
 // USERS TAB
 // ═══════════════════════════════════════════════════════════
 function UsersTab() {
+  const { t } = useTranslation();
   const { data, isLoading } = useUserActivity();
- 
+
   return (
-    <Card title="Activity by User" subtitle="Actions, failures, and module access per user">
+    <Card title={t('audit.activityByUser')} subtitle={t('audit.activityByUserSubtitle')}>
       {isLoading ? <Spinner /> : !data?.length ? (
-        <EmptyState icon={<Users className="h-12 w-12" />} title="No user activity" />
+        <EmptyState icon={<Users className="h-12 w-12" />} title={t('audit.noUserActivity')} />
       ) : (
         <div className="overflow-x-auto -mx-6">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--border-color)]">
-                <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">User</th>
-                <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Actions</th>
-                <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Failed</th>
-                <th className="hidden md:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Modules</th>
-                <th className="hidden sm:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Last Active</th>
+                <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('audit.col_user')}</th>
+                <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('common.actions')}</th>
+                <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('audit.col_failed')}</th>
+                <th className="hidden md:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('audit.col_modules')}</th>
+                <th className="hidden sm:table-cell px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('audit.col_lastActive')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-color)]">
@@ -267,9 +268,7 @@ function UsersTab() {
                 <tr key={user.userId ?? user.username} className="hover:bg-[var(--bg-tertiary)]/50 transition-colors">
                   <td className="px-6 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-500/15 text-xs font-bold text-primary-700 dark:text-primary-400">
-                        {user.username.charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar initials={user.username.charAt(0)} size="sm" />
                       <span className="font-medium text-[var(--text-primary)]">{user.username}</span>
                     </div>
                   </td>

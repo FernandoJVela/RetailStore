@@ -117,7 +117,7 @@ export function Sidebar() {
           className="hidden lg:flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[var(--sidebar-text)] hover:bg-white/5 hover:text-white transition-colors"
         >
           <ChevronLeft className={cn('h-5 w-5 shrink-0 transition-transform', collapsed && 'rotate-180')} />
-          {!collapsed && <span>Collapse</span>}
+          {!collapsed && <span>{t('common.collapse')}</span>}
         </button>
  
         <button

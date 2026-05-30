@@ -3,10 +3,10 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'react-i18next';
 import {
-  X, CheckCircle, XCircle, AlertTriangle, 
+  CheckCircle, XCircle, AlertTriangle,
   Clock, CreditCard, RotateCcw
 } from 'lucide-react';
-import { Button, Input, Badge, Spinner } from '@shared/components/ui';
+import { Button, Input, Textarea, Badge, Spinner, SlidePanel, Alert, DetailSection, Timeline } from '@shared/components/ui';
 import { getApiErrorMessage } from '@shared/api/http-client';
 import { formatDateTime } from '@shared/lib/utils';
 import {
@@ -64,38 +64,23 @@ export function PaymentDetailPanel({ paymentId, isOpen, onClose }: PaymentDetail
     } catch (err) { setApiError(getApiErrorMessage(err)); }
   };
  
-  if (!isOpen) return null;
- 
   // Timeline events from payment data
-  const timeline: { label: string; date: Date | null; icon: typeof Clock; color: string }[] = payment ? [
-    { label: 'Created', date: payment.createdAt, icon: Clock, color: 'text-[var(--text-muted)]' },
-    { label: 'Authorized', date: payment.authorizedAt, icon: CheckCircle, color: 'text-blue-500' },
-    { label: 'Captured', date: payment.capturedAt, icon: CheckCircle, color: 'text-emerald-500' },
-    { label: 'Failed', date: payment.failedAt, icon: XCircle, color: 'text-red-500' },
-    { label: 'Refunded', date: payment.refundedAt, icon: RotateCcw, color: 'text-amber-500' },
-    { label: 'Cancelled', date: payment.cancelledAt, icon: XCircle, color: 'text-red-500' },
+  const timeline = payment ? [
+    { label: 'Created', date: payment.createdAt, icon: Clock, iconColor: 'text-[var(--text-muted)]' },
+    { label: 'Authorized', date: payment.authorizedAt, icon: CheckCircle, iconColor: 'text-blue-500' },
+    { label: 'Captured', date: payment.capturedAt, icon: CheckCircle, iconColor: 'text-emerald-500' },
+    { label: 'Failed', date: payment.failedAt, icon: XCircle, iconColor: 'text-red-500' },
+    { label: 'Refunded', date: payment.refundedAt, icon: RotateCcw, iconColor: 'text-amber-500' },
+    { label: 'Cancelled', date: payment.cancelledAt, icon: XCircle, iconColor: 'text-red-500' },
   ].filter((e) => e.date !== null) : [];
  
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg overflow-y-auto bg-[var(--bg-secondary)] shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-secondary)] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Payment Details</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
- 
-        {isLoading ? (
-          <Spinner />
-        ) : payment ? (
-          <div className="p-6 space-y-6">
-            {apiError && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800 p-3">
-                <p className="text-sm text-red-700 dark:text-red-400">{apiError}</p>
-              </div>
-            )}
+    <SlidePanel isOpen={isOpen} onClose={onClose} title="Payment Details">
+      {isLoading ? (
+        <Spinner />
+      ) : payment ? (
+        <div className="p-6 space-y-6">
+            {apiError && <Alert message={apiError} />}
  
             {/* ─── Amount + Status Header ────────────────── */}
             <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
@@ -162,18 +147,14 @@ export function PaymentDetailPanel({ paymentId, isOpen, onClose }: PaymentDetail
                     <Input label="Amount" type="number" step="0.01" max={payment.netAmount} error={refundForm.formState.errors.amount?.message} {...refundForm.register('amount', { valueAsNumber: true })} />
                     <div />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-[var(--text-secondary)]">Reason</label>
-                    <textarea
-                      rows={2}
-                      placeholder="Customer request, defective item..."
-                      className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-primary-500 focus:outline-none resize-none"
-                      {...refundForm.register('reason')}
-                    />
-                    {refundForm.formState.errors.reason && (
-                      <p className="text-xs text-danger">{refundForm.formState.errors.reason.message}</p>
-                    )}
-                  </div>
+                  <Textarea
+                    label="Reason"
+                    rows={2}
+                    placeholder="Customer request, defective item..."
+                    className="bg-[var(--bg-primary)]"
+                    error={refundForm.formState.errors.reason?.message}
+                    {...refundForm.register('reason')}
+                  />
                   <div className="flex justify-end gap-2">
                     <Button variant="secondary" size="sm" type="button" onClick={() => setShowRefundForm(false)}>{t('common.cancel')}</Button>
                     <Button size="sm" type="submit" loading={refundMutation.isPending}>Submit Refund</Button>
@@ -183,22 +164,9 @@ export function PaymentDetailPanel({ paymentId, isOpen, onClose }: PaymentDetail
             </section>
  
             {/* ─── Timeline ──────────────────────────────── */}
-            <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3">Timeline</h3>
-              <div className="space-y-3">
-                {timeline.map((event, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <event.icon className={`h-4 w-4 shrink-0 ${event.color}`} />
-                    <div className="flex-1">
-                      <span className="text-sm font-medium text-[var(--text-primary)]">{event.label}</span>
-                    </div>
-                    <span className="text-xs text-[var(--text-muted)] tabular-nums">
-                      {event.date ? formatDateTime(event.date) : ''}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <DetailSection title="Timeline">
+              <Timeline events={timeline} />
+            </DetailSection>
  
             {/* ─── Refunds History ────────────────────────── */}
             {payment.refunds.length > 0 && (
@@ -218,13 +186,12 @@ export function PaymentDetailPanel({ paymentId, isOpen, onClose }: PaymentDetail
                 </div>
               </section>
             )}
-          </div>
-        ) : null}
-      </div>
-    </>
+        </div>
+      ) : null}
+    </SlidePanel>
   );
 }
- 
+
 function RefundCard({ refund, paymentId, onComplete }: {
   refund: Refund; paymentId: string; onComplete: (refundId: string) => void;
 }) {

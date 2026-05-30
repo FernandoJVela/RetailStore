@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Plus, Package, LayoutGrid, List } from 'lucide-react';
-import { Button, Card, Spinner, EmptyState } from '@shared/components/ui';
+import { Plus, Package, LayoutGrid, List } from 'lucide-react';
+import { Button, Card, Spinner, EmptyState, SearchInput, FilterPillBar, PageHeader } from '@shared/components/ui';
 import { useDebounce } from '@shared/hooks';
 import { useProducts } from '@features/products/application/hooks/useProductsQueries';
 import { PRODUCT_CATEGORIES } from '@features/products';
@@ -31,60 +31,37 @@ export function ProductsListPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t('nav.products')}</h1>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            {products?.length ?? 0} products in catalog
-          </p>
-        </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Create Product</span>
-          <span className="sm:hidden">New</span>
-        </Button>
-      </div>
+      <PageHeader
+        title={t('nav.products')}
+        subtitle={t('products.subtitle', { count: products?.length ?? 0 })}
+        action={
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('products.createProduct')}</span>
+            <span className="sm:hidden">{t('common.new')}</span>
+          </Button>
+        }
+      />
  
       {/* Filters bar */}
       <Card>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
           {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or SKU..."
-              className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] py-2.5 pl-10 pr-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-            />
-          </div>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={t('products.searchPlaceholder')}
+          />
  
           {/* Category filter */}
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setCategoryFilter('all')}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                categoryFilter === 'all'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
-              }`}
-            >
-              All
-            </button>
-            {PRODUCT_CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  categoryFilter === cat
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+          <FilterPillBar
+            options={[
+              { key: 'all', label: t('common.all') },
+              ...PRODUCT_CATEGORIES.map((cat) => ({ key: cat, label: cat })),
+            ]}
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+          />
  
           {/* Status + View mode */}
           <div className="flex items-center gap-2">
@@ -93,7 +70,7 @@ export function ProductsListPage() {
               onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
               className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-primary-500 focus:outline-none"
             >
-              <option value="all">All Status</option>
+              <option value="all">{t('products.allStatus')}</option>
               <option value="active">{t('common.active')}</option>
               <option value="inactive">{t('common.inactive')}</option>
             </select>
@@ -124,9 +101,9 @@ export function ProductsListPage() {
         <Card>
           <EmptyState
             icon={<Package className="h-12 w-12" />}
-            title="No products found"
-            description="Try adjusting your filters or create a new product."
-            action={<Button onClick={() => setShowCreate(true)}>Create Product</Button>}
+            title={t('products.noProductsFound')}
+            description={t('products.noProductsDesc')}
+            action={<Button onClick={() => setShowCreate(true)}>{t('products.createProduct')}</Button>}
           />
         </Card>
       ) : viewMode === 'grid' ? (
@@ -147,10 +124,10 @@ export function ProductsListPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--border-color)]">
-                  <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Product</th>
-                  <th className="hidden md:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">SKU</th>
-                  <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Price</th>
-                  <th className="hidden lg:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Category</th>
+                  <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('products.col_product')}</th>
+                  <th className="hidden md:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('products.col_sku')}</th>
+                  <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('products.col_price')}</th>
+                  <th className="hidden lg:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('products.col_category')}</th>
                   <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('common.status')}</th>
                   <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('common.actions')}</th>
                 </tr>

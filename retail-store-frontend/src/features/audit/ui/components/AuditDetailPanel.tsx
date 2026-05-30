@@ -1,5 +1,5 @@
-import { X, AlertTriangle, ArrowRight, Globe, Fingerprint } from 'lucide-react';
-import { Badge, Spinner } from '@shared/components/ui';
+import { AlertTriangle, ArrowRight, Globe, Fingerprint } from 'lucide-react';
+import { Badge, Spinner, SlidePanel, DetailSection } from '@shared/components/ui';
 import { formatDateTime } from '@shared/lib/utils';
 import { useAuditDetail } from '@features/audit/application/hooks/useAuditQueries';
 import { outcomeVariant } from '@features/audit';
@@ -13,23 +13,12 @@ interface AuditDetailPanelProps {
 export function AuditDetailPanel({ entryId, isOpen, onClose }: AuditDetailPanelProps) {
   const { data: entry, isLoading } = useAuditDetail(entryId);
  
-  if (!isOpen) return null;
- 
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-xl overflow-y-auto bg-[var(--bg-secondary)] shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-secondary)] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Audit Entry</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
- 
-        {isLoading ? (
-          <Spinner />
-        ) : entry ? (
-          <div className="p-6 space-y-6">
+    <SlidePanel isOpen={isOpen} onClose={onClose} title="Audit Entry" size="lg">
+      {isLoading ? (
+        <Spinner />
+      ) : entry ? (
+        <div className="p-6 space-y-6">
  
             {/* ─── Header ────────────────────────────────── */}
             <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
@@ -46,8 +35,7 @@ export function AuditDetailPanel({ entryId, isOpen, onClose }: AuditDetailPanelP
             </section>
  
             {/* ─── Who ───────────────────────────────────── */}
-            <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-              <h4 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3">Who</h4>
+            <DetailSection title="Who">
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                   <Fingerprint className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
@@ -61,12 +49,11 @@ export function AuditDetailPanel({ entryId, isOpen, onClose }: AuditDetailPanelP
                   </div>
                 )}
               </div>
-            </section>
- 
+            </DetailSection>
+
             {/* ─── What ──────────────────────────────────── */}
             {entry.entityType && (
-              <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-                <h4 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3">Entity</h4>
+              <DetailSection title="Entity">
                 <div className="text-sm text-[var(--text-secondary)]">
                   <span className="font-medium text-[var(--text-primary)]">{entry.entityType}</span>
                   {entry.entityId && <span className="ml-2 font-mono text-xs text-[var(--text-muted)]">{entry.entityId}</span>}
@@ -74,13 +61,12 @@ export function AuditDetailPanel({ entryId, isOpen, onClose }: AuditDetailPanelP
                 {entry.responseSummary && (
                   <p className="mt-1 text-xs text-[var(--text-muted)]">{entry.responseSummary}</p>
                 )}
-              </section>
+              </DetailSection>
             )}
- 
+
             {/* ─── Property Changes ──────────────────────── */}
             {entry.changedProperties && entry.changedProperties.length > 0 && (
-              <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-                <h4 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3">Changes</h4>
+              <DetailSection title="Changes">
                 <div className="space-y-2">
                   {entry.changedProperties.map((change, idx) => (
                     <div key={idx} className="flex items-center gap-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] px-3 py-2 text-sm">
@@ -91,17 +77,16 @@ export function AuditDetailPanel({ entryId, isOpen, onClose }: AuditDetailPanelP
                     </div>
                   ))}
                 </div>
-              </section>
+              </DetailSection>
             )}
- 
+
             {/* ─── Request Payload ────────────────────────── */}
             {entry.requestPayload && (
-              <section className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] p-5">
-                <h4 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3">Request Payload</h4>
+              <DetailSection title="Request Payload">
                 <pre className="text-xs font-mono text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-3 overflow-x-auto max-h-60">
                   {JSON.stringify(entry.requestPayload, null, 2)}
                 </pre>
-              </section>
+              </DetailSection>
             )}
  
             {/* ─── Error Details ──────────────────────────── */}
@@ -128,9 +113,8 @@ export function AuditDetailPanel({ entryId, isOpen, onClose }: AuditDetailPanelP
                 {entry.requestId && <p>Request: {entry.requestId}</p>}
               </div>
             )}
-          </div>
-        ) : null}
-      </div>
-    </>
+        </div>
+      ) : null}
+    </SlidePanel>
   );
 }

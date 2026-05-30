@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'react-i18next';
-import { Modal, Button, Input } from '@shared/components/ui';
+import { Modal, Button, Input, Alert } from '@shared/components/ui';
 import { getApiErrorMessage } from '@shared/api/http-client';
 import { useRegisterCustomer } from '@features/customers/application/hooks/useCustomersQueries';
 import { registerCustomerSchema, type RegisterCustomerFormData } from '@features/customers/application/useCases/customers.validation';
@@ -57,11 +57,7 @@ export function RegisterCustomerModal({ isOpen, onClose }: RegisterCustomerModal
  
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Register Customer" size="lg">
-      {apiError && (
-        <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800 p-3">
-          <p className="text-sm text-red-700 dark:text-red-400">{apiError}</p>
-        </div>
-      )}
+      {apiError && <Alert message={apiError} className="mb-4" />}
  
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Name row */}

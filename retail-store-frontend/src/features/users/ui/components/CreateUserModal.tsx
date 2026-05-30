@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'react-i18next';
-import { Modal, Button, Input } from '@shared/components/ui';
+import { Modal, Button, Input, Alert } from '@shared/components/ui';
 import { getApiErrorMessage } from '@shared/api/http-client';
 import { useRegister } from '@features/users/application/hooks/useUsersQueries';
 import { registerSchema, type RegisterFormData } from '@features/users/application/useCases/auth.validation';
@@ -45,11 +45,7 @@ export function CreateUserModal({ isOpen, onClose }: CreateUserModalProps) {
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={t('users.createUser')} size="md">
-      {apiError && (
-        <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800 p-3">
-          <p className="text-sm text-red-700 dark:text-red-400">{apiError}</p>
-        </div>
-      )}
+      {apiError && <Alert message={apiError} className="mb-4" />}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input

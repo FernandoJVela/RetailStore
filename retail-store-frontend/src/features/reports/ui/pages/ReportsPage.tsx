@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { PageHeader } from '@shared/components/ui';
 import { KpiCards } from '@features/reports';
 import { RevenueTrendChart } from '@features/reports';
 import { SalesByCategoryChart } from '@features/reports';
@@ -12,10 +13,7 @@ export function ReportsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t('nav.reports')}</h1>
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">Business intelligence across all modules</p>
-      </div>
+      <PageHeader title={t('nav.reports')} subtitle={t('reports.subtitle')} />
  
       {/* KPI Cards */}
       <KpiCards />

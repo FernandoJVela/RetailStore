@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
-import { Modal, Button, Input } from '@shared/components/ui';
+import { Modal, Button, Input, Select, Alert } from '@shared/components/ui';
 import { getApiErrorMessage } from '@shared/api/http-client';
 import { useCreateOrder } from '@features/orders/application/hooks/useOrdersQueries';
 import { useCustomers } from '@features/customers/application/hooks/useCustomersQueries';
@@ -70,48 +70,41 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
  
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Create Order" size="lg">
-      {apiError && (
-        <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800 p-3">
-          <p className="text-sm text-red-700 dark:text-red-400">{apiError}</p>
-        </div>
-      )}
+      {apiError && <Alert message={apiError} className="mb-4" />}
  
       <div className="space-y-5">
         {/* Customer select */}
-        <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-[var(--text-secondary)]">Customer</label>
-          <select
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] focus:border-primary-500 focus:outline-none"
-          >
-            <option value="">Select a customer</option>
-            {customers?.map((c) => (
-              <option key={c.id} value={c.id}>{c.fullName} ({c.email})</option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="Customer"
+          value={customerId}
+          onChange={(e) => setCustomerId(e.target.value)}
+        >
+          <option value="">Select a customer</option>
+          {customers?.map((c) => (
+            <option key={c.id} value={c.id}>{c.fullName} ({c.email})</option>
+          ))}
+        </Select>
  
         {/* Add item row */}
         <div className="space-y-1.5">
           <label className="block text-sm font-medium text-[var(--text-secondary)]">Add items</label>
           <div className="flex gap-2">
-            <select
+            <Select
               value={selectedProduct}
               onChange={(e) => setSelectedProduct(e.target.value)}
-              className="flex-1 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] focus:border-primary-500 focus:outline-none"
+              className="flex-1"
             >
               <option value="">Select product</option>
               {availableProducts.map((p) => (
                 <option key={p.id} value={p.id}>{p.name} ({p.formattedPrice})</option>
               ))}
-            </select>
-            <input
+            </Select>
+            <Input
               type="number"
               min={1}
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
-              className="w-20 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2.5 text-sm text-center text-[var(--text-primary)] focus:border-primary-500 focus:outline-none tabular-nums"
+              className="w-20 text-center tabular-nums"
             />
             <Button size="md" variant="outline" onClick={addItem} disabled={!selectedProduct}>
               <Plus className="h-4 w-4" />

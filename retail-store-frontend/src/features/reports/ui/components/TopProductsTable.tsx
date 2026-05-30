@@ -1,23 +1,25 @@
+import { useTranslation } from 'react-i18next';
 import { Card, Badge, Spinner } from '@shared/components/ui';
 import { useTopProducts } from '@features/reports/application/hooks/useReportsQueries';
- 
+
 export function TopProductsTable() {
+  const { t } = useTranslation();
   const { data, isLoading } = useTopProducts(10);
- 
-  if (isLoading) return <Card title="Top Products"><Spinner /></Card>;
+
+  if (isLoading) return <Card title={t('reports.topSellingProducts')}><Spinner /></Card>;
   if (!data?.length) return null;
- 
+
   return (
-    <Card title="Top Selling Products" subtitle="By total revenue">
+    <Card title={t('reports.topSellingProducts')} subtitle={t('reports.topSellingSubtitle')}>
       <div className="overflow-x-auto -mx-6">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--border-color)]">
               <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">#</th>
-              <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Product</th>
-              <th className="hidden md:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">Category</th>
-              <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Qty Sold</th>
-              <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">Revenue</th>
+              <th className="px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('reports.col_product')}</th>
+              <th className="hidden md:table-cell px-6 pb-3 text-left font-medium text-[var(--text-secondary)]">{t('reports.col_category')}</th>
+              <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('reports.col_qtySold')}</th>
+              <th className="px-6 pb-3 text-right font-medium text-[var(--text-secondary)]">{t('reports.col_revenue')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-color)]">
