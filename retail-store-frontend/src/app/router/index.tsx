@@ -32,6 +32,15 @@ import { OrdersListPage } from '@features/orders/ui/pages/OrdersListPage';
 // ─── Reports ────────────────────────────────────────────────
 import { ReportsPage } from '@features/reports/ui/pages/ReportsPage';
  
+// ─── Notifications ──────────────────────────────────────────
+import { NotificationsPage } from '@features/notifications/ui/pages/NotificationsPage';
+ 
+// ─── Audit ──────────────────────────────────────────────────
+import { AuditPage } from '@features/audit/ui/pages/AuditPage';
+ 
+// ─── Audit ──────────────────────────────────────────────────
+import { DashboardPage } from '@features/dashboard/ui/pages/DashboardPage';
+ 
 // ─── Placeholder pages (to be built per module later) ───────
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -56,7 +65,7 @@ export const router = createBrowserRouter([
     ),
     errorElement: <RouteErrorPage />,
     children: [
-      { index: true, element: <PlaceholderPage title="Dashboard" /> },
+      { index: true, element: <DashboardPage /> },
       { path: 'products', element: <ProductsListPage /> },
       { path: 'orders', element: <OrdersListPage /> },
       { path: 'customers', element: <CustomersListPage /> },
@@ -64,9 +73,9 @@ export const router = createBrowserRouter([
       { path: 'providers', element: <ProvidersListPage /> },
       { path: 'shipping', element: <ShippingListPage /> },
       { path: 'payments', element: <PaymentsListPage /> },
-      { path: 'notifications', element: <PlaceholderPage title="Notifications" /> },
+      { path: 'notifications', element: <NotificationsPage /> },
       { path: 'reports', element: <ReportsPage /> },
-      { path: 'audit', element: <PlaceholderPage title="Audit Trail" /> },
+      { path: 'audit', element: <AuditPage /> },
       { path: 'users', element: <UsersListPage /> },
     ],
   },
