@@ -23,6 +23,15 @@ import { ProvidersListPage } from '@features/providers/ui/pages/ProvidersListPag
 // ─── Payments ───────────────────────────────────────────────
 import { PaymentsListPage } from '@features/payments/ui/pages/PaymentsListPage';
  
+// ─── Shipping ───────────────────────────────────────────────
+import { ShippingListPage } from '@features/shipping/ui/pages/ShippingListPage';
+ 
+// ─── Orders ───────────────────────────────────────────────
+import { OrdersListPage } from '@features/orders/ui/pages/OrdersListPage';
+ 
+// ─── Reports ────────────────────────────────────────────────
+import { ReportsPage } from '@features/reports/ui/pages/ReportsPage';
+ 
 // ─── Placeholder pages (to be built per module later) ───────
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -49,14 +58,14 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <PlaceholderPage title="Dashboard" /> },
       { path: 'products', element: <ProductsListPage /> },
-      { path: 'orders', element: <PlaceholderPage title="Orders" /> },
+      { path: 'orders', element: <OrdersListPage /> },
       { path: 'customers', element: <CustomersListPage /> },
       { path: 'inventory', element: <InventoryListPage /> },
       { path: 'providers', element: <ProvidersListPage /> },
-      { path: 'shipping', element: <PlaceholderPage title="Shipping" /> },
+      { path: 'shipping', element: <ShippingListPage /> },
       { path: 'payments', element: <PaymentsListPage /> },
       { path: 'notifications', element: <PlaceholderPage title="Notifications" /> },
-      { path: 'reports', element: <PlaceholderPage title="Reports" /> },
+      { path: 'reports', element: <ReportsPage /> },
       { path: 'audit', element: <PlaceholderPage title="Audit Trail" /> },
       { path: 'users', element: <UsersListPage /> },
     ],
