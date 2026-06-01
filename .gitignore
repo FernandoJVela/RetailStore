@@ -1,3 +1,8 @@
+# ── Playwright E2E ────────────────────────────────────────────────────────────
+retail-store-frontend/e2e/.auth/session.json   # saved browser auth state
+retail-store-frontend/playwright-report/       # HTML test report
+retail-store-frontend/test-results/            # trace / screenshot / video artifacts
+
 # Created by https://www.toptal.com/developers/gitignore/api/aspnetcore
 # Edit at https://www.toptal.com/developers/gitignore?templates=aspnetcore
 
