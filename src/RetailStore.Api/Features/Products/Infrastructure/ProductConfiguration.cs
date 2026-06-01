@@ -20,9 +20,8 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .IsRequired();
         builder.HasIndex(p => p.Sku).IsUnique();
  
-        builder.Property(p => p.Description)
-            .HasColumnType("nvarchar(max)");
- 
+        builder.Property(p => p.Description);
+
         builder.Property(p => p.Category)
             .HasMaxLength(100)
             .IsRequired();

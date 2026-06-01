@@ -30,7 +30,7 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.GatewayName).HasMaxLength(50);
         builder.Property(p => p.GatewayTransactionId).HasMaxLength(200);
         builder.HasIndex(p => p.GatewayTransactionId);
-        builder.Property(p => p.GatewayResponse).HasColumnType("nvarchar(max)");
+        builder.Property(p => p.GatewayResponse);
  
         builder.Property(p => p.AuthorizedAt);
         builder.Property(p => p.CapturedAt);

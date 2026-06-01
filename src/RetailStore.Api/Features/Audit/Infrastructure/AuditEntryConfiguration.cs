@@ -21,9 +21,9 @@ public sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntr
         builder.Property(a => a.EntityId).HasMaxLength(100);
         builder.Property(a => a.Description).HasMaxLength(500);
  
-        builder.Property(a => a.RequestPayload).HasColumnType("nvarchar(max)");
+        builder.Property(a => a.RequestPayload);
         builder.Property(a => a.ResponseSummary).HasMaxLength(500);
-        builder.Property(a => a.ChangedProperties).HasColumnType("nvarchar(max)");
+        builder.Property(a => a.ChangedProperties);
  
         builder.Property(a => a.Outcome).HasMaxLength(20).IsRequired().HasDefaultValue("Success");
         builder.Property(a => a.ErrorCode).HasMaxLength(50);

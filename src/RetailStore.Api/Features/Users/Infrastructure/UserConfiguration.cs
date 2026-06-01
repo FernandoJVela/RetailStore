@@ -48,7 +48,6 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion(
                 v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
                 v => System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(v, (System.Text.Json.JsonSerializerOptions?)null)!)
-            .HasColumnType("nvarchar(max)")
             .Metadata.SetValueComparer(roleIdsComparer);
 
         builder.Ignore(u => u.DomainEvents);

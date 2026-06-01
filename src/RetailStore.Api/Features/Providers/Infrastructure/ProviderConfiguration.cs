@@ -34,7 +34,6 @@ public sealed class ProviderConfiguration : IEntityTypeConfiguration<Provider>
         // ProductIds stored as JSON string: nvarchar(max)
         builder.Property(p => p.ProductIds)
             .HasColumnName("ProductIds")
-            .HasColumnType("nvarchar(max)")
             .IsRequired()
             .HasDefaultValue("[]");
  

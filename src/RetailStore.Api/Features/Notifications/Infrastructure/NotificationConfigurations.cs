@@ -20,7 +20,7 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(n => n.Channel).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(n => n.Category).HasConversion<string>().HasMaxLength(50).IsRequired();
         builder.Property(n => n.Subject).HasMaxLength(300);
-        builder.Property(n => n.Body).HasColumnType("nvarchar(max)").IsRequired();
+        builder.Property(n => n.Body).IsRequired();
  
         builder.Property(n => n.Status).HasConversion<string>().HasMaxLength(20).IsRequired().HasDefaultValue(NotificationStatus.Pending);
         builder.Property(n => n.Priority).HasConversion<string>().HasMaxLength(10).IsRequired().HasDefaultValue(NotificationPriority.Normal);
@@ -58,7 +58,7 @@ public sealed class NotificationTemplateConfiguration : IEntityTypeConfiguration
         builder.HasIndex(t => new { t.Name, t.Channel }).IsUnique();
  
         builder.Property(t => t.Subject).HasMaxLength(300);
-        builder.Property(t => t.BodyTemplate).HasColumnType("nvarchar(max)").IsRequired();
+        builder.Property(t => t.BodyTemplate).IsRequired();
         builder.Property(t => t.Category).HasConversion<string>().HasMaxLength(50).IsRequired();
         builder.Property(t => t.IsActive).HasDefaultValue(true);
         builder.Property(t => t.Version).IsConcurrencyToken();

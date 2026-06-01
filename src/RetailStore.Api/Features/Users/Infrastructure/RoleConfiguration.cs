@@ -35,7 +35,6 @@ public sealed class RoleConfiguration : IEntityTypeConfiguration<Role>
                 v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(
                     v, (System.Text.Json.JsonSerializerOptions?)null)!
                     .Select(s => Permission.Parse(s)).ToList())
-            .HasColumnType("nvarchar(max)")
             .Metadata.SetValueComparer(permComparer);
 
         builder.Property(r => r.Version).IsConcurrencyToken();
