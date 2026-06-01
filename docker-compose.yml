@@ -1,0 +1,142 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# RetailStore — Development Stack
+#
+# WHAT THIS FILE DOES:
+#   Starts three containers that together form the full application:
+#     db        → SQL Server 2022 (stores all data)
+#     backend   → ASP.NET Core API (business logic, REST endpoints)
+#     frontend  → Vite dev server (React UI with hot-module replacement)
+#
+# USAGE:
+#   1. Copy .env.example to .env and fill in your secrets.
+#   2. Run:  docker-compose up --build
+#   3. Open: http://localhost:3000  (React app)
+#            http://localhost:5240/swagger  (API docs)
+#            http://localhost:5240/health   (health check)
+#
+# THEORY — Docker networks:
+#   All services declared in this file share a private virtual network called
+#   "retailstore_net". Inside this network each container is identified by its
+#   service name (db, backend, frontend). Services communicate using these names
+#   as hostnames — no IP addresses needed. Traffic never leaves the Docker host.
+#
+# THEORY — Environment variable override in .NET:
+#   ASP.NET Core maps environment variables to configuration using "__" as the
+#   hierarchy separator. So ConnectionStrings__DefaultConnection in the container
+#   environment overrides the "DefaultConnection" value under "ConnectionStrings"
+#   in appsettings.json. No code changes are needed.
+#
+# THEORY — Variable substitution from .env:
+#   Docker Compose automatically reads the .env file in the same directory and
+#   substitutes ${VAR} placeholders in this file. Never commit .env to git.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ─── SQL Server ─────────────────────────────────────────────────────────────
+  # Uses the official Microsoft SQL Server 2022 image for Linux.
+  # The Developer edition is free for development and testing.
+  #
+  # THEORY — Health checks:
+  #   SQL Server needs 30–45 seconds to initialise on first boot. Without a
+  #   health check, the backend would crash immediately trying to connect before
+  #   SQL Server is ready. The healthcheck runs "sqlcmd SELECT 1" every 10 s.
+  #   Once it succeeds, Docker marks the container as "healthy" and the backend
+  #   is allowed to start (see depends_on below).
+  #
+  # THEORY — Volumes:
+  #   The volume "sqlserver_data" maps /var/opt/mssql inside the container to a
+  #   Docker-managed directory on the host. Database files written there survive
+  #   container restarts and removals. "docker-compose down -v" deletes the volume.
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "${DB_PASSWORD}"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$SA_PASSWORD" -Q "SELECT 1" -b -No -C'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    networks:
+      - retailstore_net
+
+  # ─── .NET Backend ────────────────────────────────────────────────────────────
+  # Builds the "runtime" stage of /Dockerfile (the tiny aspnet image).
+  # Configuration is injected entirely via environment variables — no files to
+  # mount or modify. The appsettings.json values are overridden at runtime.
+  #
+  # PORT MAPPING:
+  #   The container listens on port 8080 (set by ASPNETCORE_URLS).
+  #   We expose it on host port 5240 to match the Vite proxy config that was
+  #   already in place before Docker was introduced.
+  #
+  # DEPENDS_ON with service_healthy:
+  #   The backend will not start until the "db" container passes its health check.
+  #   Without this, the backend would crash and restart several times before
+  #   SQL Server is ready — wasting time and creating confusing log noise.
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: >-
+        Server=db,1433;Database=RetailStoreDb;
+        User Id=sa;Password=${DB_PASSWORD};
+        TrustServerCertificate=True;
+      Jwt__Secret: "${JWT_SECRET}"
+      Jwt__Issuer: RetailStore
+      Jwt__Audience: RetailStore
+      Seed__AdminEmail: "${SEED_ADMIN_EMAIL}"
+    ports:
+      - "5240:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - retailstore_net
+
+  # ─── React Frontend (Vite dev server) ────────────────────────────────────────
+  # Builds the "dev" stage of /retail-store-frontend/Dockerfile.
+  # This runs "npm run dev -- --host" which starts Vite with hot-module
+  # replacement. Changes to source files are reflected in the browser instantly
+  # without rebuilding the Docker image.
+  #
+  # VITE_API_PROXY_TARGET:
+  #   This Node.js process environment variable is read by vite.config.ts at
+  #   Vite startup. Inside Docker, the proxy must point to the "backend" service
+  #   name (Docker DNS), not localhost. Outside Docker (npm run dev locally) the
+  #   variable is absent and the fallback http://localhost:5240 is used.
+  frontend:
+    build:
+      context: ./retail-store-frontend
+      dockerfile: Dockerfile
+      target: dev
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - retailstore_net
+
+# ─── Named Volumes ──────────────────────────────────────────────────────────────
+volumes:
+  sqlserver_data:
+
+# ─── Network ────────────────────────────────────────────────────────────────────
+networks:
+  retailstore_net:
+    driver: bridge

@@ -1,0 +1,64 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# RetailStore — Production Overrides
+#
+# WHAT THIS FILE DOES:
+#   This file does NOT stand alone. It is an override file applied on top of
+#   docker-compose.yml using Docker Compose's merge syntax:
+#
+#     docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+#   Only the values that differ from development need to be listed here.
+#   Everything in docker-compose.yml that is not overridden stays the same.
+#
+# THEORY — Compose file merging:
+#   Docker Compose deep-merges the two files. For each service, values in the
+#   second file overwrite the matching keys in the first. New keys are added.
+#   For lists (like "ports"), the lists are concatenated.
+#
+# KEY DIFFERENCES FROM DEVELOPMENT:
+#   backend  → ASPNETCORE_ENVIRONMENT=Production (disables Swagger, verbose logs)
+#   frontend → builds the "runtime" stage (Nginx + compiled dist/) instead of
+#              the "dev" stage (Vite dev server)
+#   All services get "restart: unless-stopped" so the stack survives host reboots.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ─── SQL Server ──────────────────────────────────────────────────────────────
+  db:
+    restart: unless-stopped
+
+  # ─── .NET Backend ────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    restart: unless-stopped
+
+  # ─── React Frontend (Nginx — compiled bundle) ─────────────────────────────
+  # In production the "runtime" stage is used:
+  #   - The "build" stage compiled TypeScript and bundled all assets into dist/.
+  #   - The "runtime" stage copies dist/ into a minimal Nginx image.
+  #   - Nginx serves the static files and proxies /api/* to the backend.
+  #
+  # PORT MAPPING:
+  #   Nginx listens on port 80 inside the container.
+  #   We map it to host port 3000 to keep the same URL as development.
+  #   On a real server you would map to 80/443 and handle TLS with Nginx or
+  #   a cloud load balancer.
+  #
+  # VITE_API_PROXY_TARGET is not used in the runtime stage because Nginx
+  # handles the /api proxy (see nginx.conf) — the Vite dev server is gone.
+  frontend:
+    build:
+      context: ./retail-store-frontend
+      dockerfile: Dockerfile
+      target: runtime
+    ports:
+      - "3000:80"
+    environment:
+      VITE_API_PROXY_TARGET: ""
+    restart: unless-stopped

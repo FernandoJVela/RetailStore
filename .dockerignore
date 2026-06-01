@@ -1,0 +1,20 @@
+# Exclude version control and editor metadata
+.git
+.gitignore
+.vscode
+
+# Exclude the frontend — it has its own build context
+retail-store-frontend
+
+# Exclude compiled output (Docker builds from source)
+**/bin
+**/obj
+**/.vs
+
+# Exclude local user secrets and Docker environment files
+**/*.user
+.env
+.env.local
+
+# Exclude test artifacts
+**/TestResults

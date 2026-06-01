@@ -1,0 +1,17 @@
+# Exclude local install — Docker installs its own via npm ci
+node_modules
+
+# Exclude previous build output
+dist
+
+# Exclude version control and editor metadata
+.git
+.gitignore
+
+# Exclude Playwright artifacts
+playwright-report
+test-results
+e2e/.auth
+
+# Exclude coverage reports
+coverage

@@ -1,0 +1,54 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# RetailStore — Test Runner
+#
+# WHAT THIS FILE DOES:
+#   Runs backend and frontend tests in isolated Docker containers and exits.
+#   It does NOT extend docker-compose.yml — it is a standalone file for CI/CD.
+#
+# USAGE:
+#   docker-compose -f docker-compose.test.yml up --build --exit-code-from backend-tests
+#
+# THEORY — --exit-code-from <service>:
+#   Normally "docker-compose up" waits for all containers to stop and then exits
+#   with code 0. With --exit-code-from backend-tests, Compose exits with the
+#   exit code of the "backend-tests" container. If the tests pass, exit code = 0.
+#   If any test fails, exit code != 0. CI systems (GitHub Actions, Azure Pipelines)
+#   use this exit code to mark the pipeline step as failed.
+#
+# THEORY — No SQL Server needed:
+#   The backend test project uses RetailStoreWebAppFactory, which replaces
+#   SQL Server with SQLite in-memory for every test class. This means ALL backend
+#   tests (unit AND integration) run without any external database.
+#   See: tests/RetailStore.Tests/Integration/RetailStoreWebAppFactory.cs
+#
+# THEORY — "target: test" in the Dockerfile:
+#   Docker multi-stage builds can be stopped at a specific stage using the
+#   "target" key. "target: test" builds up to (and including) the test stage
+#   defined in the Dockerfile. That stage runs the tests and exits with the
+#   appropriate exit code. The image is discarded after the tests finish.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ─── Backend Tests (.NET / xUnit) ───────────────────────────────────────────
+  # Builds up to the "test" stage in /Dockerfile, which runs:
+  #   dotnet test tests/RetailStore.Tests/... --logger "console;verbosity=normal"
+  # All unit and integration tests run here. SQLite in-memory replaces SQL Server.
+  # The container exits with the test result's exit code.
+  backend-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+
+  # ─── Frontend Tests (Vitest) ─────────────────────────────────────────────────
+  # Builds up to the "test" stage in /retail-store-frontend/Dockerfile, which runs:
+  #   npm run test  (vitest run — single pass, exits after completion)
+  # Runs component tests, hook tests, and utility tests.
+  # Playwright E2E tests are not included because they require a running browser
+  # and a live backend — run them separately with "npm run e2e" locally.
+  frontend-tests:
+    build:
+      context: ./retail-store-frontend
+      dockerfile: Dockerfile
+      target: test
