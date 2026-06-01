@@ -128,6 +128,10 @@ var app = builder.Build();
 var seederLogger = app.Services.GetRequiredService<ILogger<Program>>();
 await DatabaseSeeder.SeedAsync(app.Services, seederLogger);
 
+// ─── Development Data (demo products, customers, orders) ──
+if (app.Environment.IsDevelopment())
+    await DevelopmentDataSeeder.SeedAsync(app.Services, seederLogger);
+
 app.UseMiddleware<CorrelationMiddleware>();
 app.UseExceptionHandler();
 app.UseRateLimiter();
