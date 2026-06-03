@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle, XCircle, Package, DollarSign, Trash2 } from 'lucide-react';
+import { CheckCircle, XCircle, Package, Trash2 } from 'lucide-react';
 import { Button, Badge, Spinner, SlidePanel, Textarea, Alert } from '@shared/components/ui';
 import { getApiErrorMessage } from '@shared/api/http-client';
 import { formatDate, formatDateTime } from '@shared/lib/utils';

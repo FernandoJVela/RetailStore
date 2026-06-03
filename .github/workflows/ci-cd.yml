@@ -1,0 +1,180 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# Automatically cancel any in-progress run for the same branch.
+# This prevents multiple deploys from queuing up on rapid pushes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  # github.repository is "FernandoJVela/RetailStore" — lowercase required for image names
+  IMAGE_BACKEND: ghcr.io/${{ github.repository_owner }}/retailstore-backend
+  IMAGE_FRONTEND: ghcr.io/${{ github.repository_owner }}/retailstore-frontend
+
+jobs:
+  # ── Job 1: Backend tests ──────────────────────────────────────────────────
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
+      - name: Restore
+        run: dotnet restore tests/RetailStore.Tests/RetailStore.Tests.csproj
+
+      - name: Test
+        run: |
+          dotnet test tests/RetailStore.Tests/RetailStore.Tests.csproj \
+            --no-restore \
+            --logger "console;verbosity=normal" \
+            --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: "**/*.trx"
+
+  # ── Job 2: Frontend tests ─────────────────────────────────────────────────
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: retail-store-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: retail-store-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm test
+
+  # ── Job 3: Build & push images ────────────────────────────────────────────
+  # Only runs on pushes to master (not PRs).
+  # Tags each image with both the git SHA (immutable) and "latest" (mutable pointer).
+  build-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write   # required to push to ghcr.io
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          # GITHUB_TOKEN is automatically scoped to this repo — no manual secret needed.
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ── Backend ────────────────────────────────────────────────────────────
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          # sha tag is immutable — used for deploy + rollback.
+          # latest tag is a mutable convenience pointer.
+          tags: |
+            ${{ env.IMAGE_BACKEND }}:${{ github.sha }}
+            ${{ env.IMAGE_BACKEND }}:latest
+          # Cache layers from the registry so repeated builds are fast.
+          cache-from: type=registry,ref=${{ env.IMAGE_BACKEND }}:latest
+          cache-to: type=inline
+
+      # ── Frontend ───────────────────────────────────────────────────────────
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: retail-store-frontend
+          file: retail-store-frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
+            ${{ env.IMAGE_FRONTEND }}:latest
+          cache-from: type=registry,ref=${{ env.IMAGE_FRONTEND }}:latest
+          cache-to: type=inline
+
+  # ── Job 4: Deploy to Kubernetes ───────────────────────────────────────────
+  # Runs only on master after images are pushed.
+  # `helm upgrade --install` is idempotent: first run installs, subsequent runs upgrade.
+  # The git SHA tag pins the exact image, making every deploy traceable to a commit.
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build-push
+    environment: dev   # maps to a GitHub Environment for approval gates / env secrets
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Set up kubeconfig
+        # KUBECONFIG_DEV is a repository secret containing the base64-encoded kubeconfig.
+        # For a cloud cluster: export the kubeconfig, base64-encode it, add as a secret.
+        #   GKE:  gcloud container clusters get-credentials ... | base64
+        #   AKS:  az aks get-credentials ...                   | base64
+        #   EKS:  aws eks update-kubeconfig ...                 | base64
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DEV }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Helm upgrade --install
+        run: |
+          helm upgrade --install retailstore k8s/helm/retailstore \
+            --namespace retailstore-dev \
+            --create-namespace \
+            --timeout 8m \
+            --atomic \
+            --set backend.image.repository=${{ env.IMAGE_BACKEND }} \
+            --set backend.image.tag=${{ github.sha }} \
+            --set backend.image.pullPolicy=Always \
+            --set frontend.image.repository=${{ env.IMAGE_FRONTEND }} \
+            --set frontend.image.tag=${{ github.sha }} \
+            --set frontend.image.pullPolicy=Always \
+            --set secrets.dbPassword=${{ secrets.DB_PASSWORD }} \
+            --set secrets.jwtSecret=${{ secrets.JWT_SECRET }}
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/retailstore-backend \
+            --namespace retailstore-dev --timeout=120s
+          kubectl rollout status deployment/retailstore-frontend \
+            --namespace retailstore-dev --timeout=60s

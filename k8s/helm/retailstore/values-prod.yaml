@@ -1,0 +1,38 @@
+# Production overrides — merge on top of values.yaml with:
+#   helm upgrade retailstore k8s/helm/retailstore -f k8s/helm/retailstore/values-prod.yaml \
+#     --set secrets.dbPassword=<pw> --set secrets.jwtSecret=<key>
+
+namespace: retailstore-prod
+
+backend:
+  image:
+    pullPolicy: Always    # always pull from registry in production
+  replicas: 3
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "2"
+      memory: "1Gi"
+  hpa:
+    minReplicas: 3
+    maxReplicas: 12
+
+frontend:
+  image:
+    pullPolicy: Always
+  replicas: 2
+
+sqlserver:
+  storage: 50Gi
+
+ingress:
+  host: "retailstore.com"
+
+config:
+  aspnetcoreEnvironment: Production
+  jwtIssuer: "https://retailstore.com"
+  jwtAudience: "RetailStore"
+  jwtExpiryMinutes: "60"
+  seedAdminEmail: "admin@retailstore.com"

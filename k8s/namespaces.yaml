@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: retailstore-dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: retailstore-prod

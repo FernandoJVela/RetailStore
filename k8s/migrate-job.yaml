@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: retailstore-migrate
+  namespace: retailstore-dev
+spec:
+  # Delete the Job pod automatically 5 minutes after it finishes (success or failure).
+  # Without this, completed Job pods accumulate and clutter the namespace.
+  ttlSecondsAfterFinished: 300
+  # Retry up to 3 times before marking the Job as failed.
+  backoffLimit: 3
+  template:
+    spec:
+      # OnFailure: restart the container on failure (within the same pod).
+      # Never: would create a new pod on each retry — less efficient.
+      restartPolicy: OnFailure
+      containers:
+      - name: migrate
+        image: retailstore-backend:2.0
+        imagePullPolicy: IfNotPresent
+        # Appended to the image ENTRYPOINT: `dotnet RetailStore.Api.dll --migrate`
+        # Program.cs detects this flag, runs EnsureCreated + seed, then exits 0.
+        args: ["--migrate"]
+        envFrom:
+        - configMapRef:
+            name: retailstore-config
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: retailstore-secrets
+              key: DB_PASSWORD
+        - name: Jwt__Secret
+          valueFrom:
+            secretKeyRef:
+              name: retailstore-secrets
+              key: JWT_SECRET
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=retailstore-sqlserver-svc;Database=RetailStoreDb;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"

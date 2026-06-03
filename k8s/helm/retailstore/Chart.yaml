@@ -1,0 +1,6 @@
+apiVersion: v2
+name: retailstore
+description: RetailStore full-stack application — .NET backend + React frontend + SQL Server
+type: application
+version: 0.1.0
+appVersion: "2.0"

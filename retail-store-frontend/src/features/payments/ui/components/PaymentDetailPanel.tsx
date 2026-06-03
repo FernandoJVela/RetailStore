@@ -192,7 +192,7 @@ export function PaymentDetailPanel({ paymentId, isOpen, onClose }: PaymentDetail
   );
 }
 
-function RefundCard({ refund, paymentId, onComplete }: {
+function RefundCard({ refund, paymentId: _paymentId, onComplete }: {
   refund: Refund; paymentId: string; onComplete: (refundId: string) => void;
 }) {
   const statusVariant = refund.status === 'Completed' ? 'success'

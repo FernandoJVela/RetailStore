@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: retailstore-sqlserver
+  namespace: retailstore-dev
+spec:
+  serviceName: retailstore-sqlserver-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: retailstore-sqlserver
+  template:
+    metadata:
+      labels:
+        app: retailstore-sqlserver
+    spec:
+      containers:
+      - name: sqlserver
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+        - containerPort: 1433
+        envFrom:
+        - configMapRef:
+            name: retailstore-config       # provides ACCEPT_EULA and MSSQL_PID
+        env:
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: retailstore-secrets
+              key: DB_PASSWORD
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "2"
+            memory: "2Gi"
+        # SQL Server can take 30-60s to initialise on first boot.
+        # startupProbe gives it up to 5m (30 attempts x 10s) before
+        # liveness checks begin — prevents premature restarts.
+        startupProbe:
+          tcpSocket:
+            port: 1433
+          failureThreshold: 30
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 1433
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 6
+        volumeMounts:
+        - name: sqlserver-data
+          mountPath: /var/opt/mssql
+  # Each replica gets its own PVC — survives Pod restarts and rescheduling.
+  # Equivalent to the "sqlserver_data" named volume in docker-compose.yml.
+  volumeClaimTemplates:
+  - metadata:
+      name: sqlserver-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: retailstore-sqlserver-svc
+  namespace: retailstore-dev
+spec:
+  selector:
+    app: retailstore-sqlserver
+  ports:
+  - port: 1433
+    targetPort: 1433
+  type: ClusterIP

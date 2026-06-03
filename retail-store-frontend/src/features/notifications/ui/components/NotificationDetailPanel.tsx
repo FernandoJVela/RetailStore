@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { CheckCircle, Clock, Mail, AlertTriangle } from 'lucide-react';
 import { Button, Badge, Spinner, SlidePanel, DetailSection, Timeline } from '@shared/components/ui';
 import { formatDateTime } from '@shared/lib/utils';
@@ -12,7 +11,6 @@ interface NotificationDetailPanelProps {
 }
  
 export function NotificationDetailPanel({ notificationId, isOpen, onClose }: NotificationDetailPanelProps) {
-  const { t } = useTranslation();
   const { data: notification, isLoading } = useNotification(notificationId);
   const markReadMut = useMarkNotificationRead();
  

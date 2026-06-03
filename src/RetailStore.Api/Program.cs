@@ -22,6 +22,34 @@ using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.Extensions.Configuration;
+
+// ─── Migration-only mode ────────────────────────────────────
+// When the K8s migrate Job runs this image with `--migrate`, we create the
+// schema and seed reference data, then exit — no HTTP server is started.
+// Uses ServiceCollection directly to avoid WebApplication background threads
+// that would prevent the process from exiting after the work is done.
+if (args.Contains("--migrate"))
+{
+    var config = new ConfigurationBuilder()
+        .AddEnvironmentVariables()
+        .Build();
+
+    var services = new ServiceCollection();
+    services.AddSingleton<IConfiguration>(config);
+    services.AddSingleton(new DbContextAssemblyOptions
+    {
+        ConfigurationAssemblies = { typeof(Program).Assembly }
+    });
+    services.AddDbContext<RetailStoreDbContext>(o =>
+        o.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+    services.AddLogging(b => b.AddConsole());
+
+    await using var sp = services.BuildServiceProvider();
+    var migrateLogger = sp.GetRequiredService<ILogger<Program>>();
+    await DatabaseSeeder.SeedAsync(sp, migrateLogger);
+    return;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -143,6 +171,12 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health", new()
     { ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse });
+app.MapHealthChecks("/health/live", new() { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new()
+{
+    Predicate = check => check.Tags.Contains("critical"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.Run();
 

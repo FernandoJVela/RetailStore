@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: retailstore-backend-pdb
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "retailstore.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.backend.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app: retailstore-backend

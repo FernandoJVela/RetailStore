@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ShoppingCart, Plus, CheckCircle, Clock, XCircle, DollarSign } from 'lucide-react';
+import { ShoppingCart, Plus, CheckCircle, Clock, DollarSign } from 'lucide-react';
 import { Button, Card, Spinner, EmptyState, StatCard, FilterPillBar, PageHeader } from '@shared/components/ui';
 import { useOrders } from '@features/orders';
 import { OrderRow } from '@features/orders';

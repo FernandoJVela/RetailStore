@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: retailstore-ingress
+  namespace: retailstore-dev
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      # All /api/* requests go directly to the backend service.
+      # The browser never touches the frontend nginx for API calls.
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: retailstore-backend-svc
+            port:
+              number: 80
+      # Everything else (/, /products, /orders, etc.) goes to the frontend nginx,
+      # which serves index.html and lets React Router handle the route client-side.
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: retailstore-frontend-svc
+            port:
+              number: 80

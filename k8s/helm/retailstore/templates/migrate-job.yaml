@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: retailstore-migrate
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "retailstore.labels" . | nindent 4 }}
+  annotations:
+    # post-install: runs after all chart resources are created on `helm install`
+    # post-upgrade: runs after all chart resources are updated on `helm upgrade`
+    # SQL Server must be running before this Job can connect — the backoffLimit
+    # handles retries while SQL Server is still initializing.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    # before-hook-creation: delete the previous Job before running this one
+    # hook-succeeded: delete the Job pod after it exits 0 (keeps the namespace clean)
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: migrate
+        image: {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        args: ["--migrate"]
+        envFrom:
+        - configMapRef:
+            name: retailstore-config
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: retailstore-secrets
+              key: DB_PASSWORD
+        - name: Jwt__Secret
+          valueFrom:
+            secretKeyRef:
+              name: retailstore-secrets
+              key: JWT_SECRET
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=retailstore-sqlserver-svc;Database=RetailStoreDb;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"

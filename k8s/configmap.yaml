@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: retailstore-config
+  namespace: retailstore-dev
+data:
+  # ASP.NET Core
+  ASPNETCORE_ENVIRONMENT: "Development"
+  ASPNETCORE_URLS: "http://+:8080"
+
+  # JWT (non-secret fields only — the signing key lives in the Secret)
+  Jwt__Issuer: "RetailStore"
+  Jwt__Audience: "RetailStore"
+  Jwt__ExpiryInMinutes: "30"
+
+  # Seeding
+  Seed__AdminEmail: "admin@retailstore.com"
+
+  # SQL Server (non-secret fields — password comes from the Secret)
+  ACCEPT_EULA: "Y"
+  MSSQL_PID: "Developer"

@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: retailstore-backend
+  namespace: retailstore-dev
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: retailstore-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1   # never kill more than 1 replica at a time during updates
+      maxSurge: 1         # allow 1 extra replica to exist during updates
+  template:
+    metadata:
+      labels:
+        app: retailstore-backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      # initContainers run to completion before any main container starts.
+      # This one blocks the backend from starting until SQL Server accepts TCP connections.
+      # It does NOT wait for the migrate Job — that ordering is enforced at apply time.
+      initContainers:
+      - name: wait-for-sqlserver
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for SQL Server on retailstore-sqlserver-svc:1433..."
+          until nc -zw1 retailstore-sqlserver-svc 1433; do
+            echo "SQL Server not ready — retrying in 3s"
+            sleep 3
+          done
+          echo "SQL Server is ready"
+      containers:
+      - name: api
+        image: retailstore-backend:2.0
+        imagePullPolicy: IfNotPresent   # use the locally built image; don't hit a registry
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: retailstore-config    # ASPNETCORE_ENVIRONMENT, JWT non-secrets, etc.
+        env:
+        # Expose DB_PASSWORD as an env var so the connection string below can reference it
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: retailstore-secrets
+              key: DB_PASSWORD
+        # ASP.NET Core reads Jwt__Secret (double underscore) as Jwt:Secret in config
+        - name: Jwt__Secret
+          valueFrom:
+            secretKeyRef:
+              name: retailstore-secrets
+              key: JWT_SECRET
+        # Kubernetes resolves $(DB_PASSWORD) from the env var defined above
+        - name: ConnectionStrings__DefaultConnection
+          value: "Server=retailstore-sqlserver-svc;Database=RetailStoreDb;User Id=sa;Password=$(DB_PASSWORD);TrustServerCertificate=True;"
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+        # Process is alive if it can respond at all — no dependency checks
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          failureThreshold: 3
+        # Pod receives traffic only once SQL Server + Outbox are healthy
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: retailstore-backend-svc
+  namespace: retailstore-dev
+spec:
+  selector:
+    app: retailstore-backend
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP

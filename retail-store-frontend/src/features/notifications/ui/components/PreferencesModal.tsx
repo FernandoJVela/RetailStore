@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { Modal, Spinner, Toggle } from '@shared/components/ui';
 import { useNotificationPreferences, useUpdatePreference } from '@features/notifications/application/hooks/useNotificationsQueries';
 import type { NotificationCategory, NotificationChannel } from '@features/notifications';
@@ -13,7 +12,6 @@ const CATEGORIES: NotificationCategory[] = ['Order', 'Inventory', 'Shipping', 'U
 const CHANNELS: NotificationChannel[] = ['Email', 'InApp'];
  
 export function PreferencesModal({ recipientId, isOpen, onClose }: PreferencesModalProps) {
-  const { t } = useTranslation();
   const { data: preferences, isLoading } = useNotificationPreferences(recipientId);
   const updateMut = useUpdatePreference();
  

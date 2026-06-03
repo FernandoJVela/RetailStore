@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: retailstore-sqlserver
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "retailstore.labels" . | nindent 4 }}
+spec:
+  serviceName: retailstore-sqlserver-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: retailstore-sqlserver
+  template:
+    metadata:
+      labels:
+        app: retailstore-sqlserver
+    spec:
+      containers:
+      - name: sqlserver
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+        - containerPort: 1433
+        envFrom:
+        - configMapRef:
+            name: retailstore-config
+        env:
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: retailstore-secrets
+              key: DB_PASSWORD
+        resources:
+          requests:
+            cpu: {{ .Values.sqlserver.resources.requests.cpu | quote }}
+            memory: {{ .Values.sqlserver.resources.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.sqlserver.resources.limits.cpu | quote }}
+            memory: {{ .Values.sqlserver.resources.limits.memory | quote }}
+        startupProbe:
+          tcpSocket:
+            port: 1433
+          failureThreshold: 30
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 1433
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 6
+        volumeMounts:
+        - name: sqlserver-data
+          mountPath: /var/opt/mssql
+  volumeClaimTemplates:
+  - metadata:
+      name: sqlserver-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: {{ .Values.sqlserver.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: retailstore-sqlserver-svc
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "retailstore.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: retailstore-sqlserver
+  ports:
+  - port: 1433
+    targetPort: 1433
+  type: ClusterIP

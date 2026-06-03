@@ -1,0 +1,69 @@
+# ── Namespace ─────────────────────────────────────────────────────────────────
+namespace: retailstore-dev
+
+# ── Backend ───────────────────────────────────────────────────────────────────
+backend:
+  image:
+    repository: retailstore-backend
+    tag: "2.0"
+    pullPolicy: IfNotPresent
+  replicas: 2
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "512Mi"
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    cpuTargetUtilization: 70
+  pdb:
+    minAvailable: 1
+
+# ── Frontend ──────────────────────────────────────────────────────────────────
+frontend:
+  image:
+    repository: retailstore-frontend
+    tag: "1.0"
+    pullPolicy: IfNotPresent
+  replicas: 2
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+
+# ── SQL Server ────────────────────────────────────────────────────────────────
+sqlserver:
+  storage: 10Gi
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2"
+      memory: "2Gi"
+
+# ── Ingress ───────────────────────────────────────────────────────────────────
+ingress:
+  host: ""    # empty = catch-all (no Host header matching); set to a hostname to restrict
+
+# ── Non-sensitive configuration ───────────────────────────────────────────────
+config:
+  aspnetcoreEnvironment: Development
+  jwtIssuer: "RetailStore"
+  jwtAudience: "RetailStore"
+  jwtExpiryMinutes: "30"
+  seedAdminEmail: "admin@retailstore.com"
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+# Never commit real values here. Pass at install time:
+#   helm install ... --set secrets.dbPassword=<pw> --set secrets.jwtSecret=<key>
+secrets:
+  dbPassword: ""
+  jwtSecret: ""
