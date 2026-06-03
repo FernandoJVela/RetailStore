@@ -1,13 +1,15 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using RetailStore.Api.Features.Orders.Domain;
 using RetailStore.Tests.TestHelpers.Builders;
 
 namespace RetailStore.Tests.Integration.Api;
 
 /// <summary>
 /// HTTP-level tests for OrdersController (api/v1/orders).
-/// Exercises the full order lifecycle: create → confirm → complete / cancel.
+/// Exercises the full order lifecycle: create → confirm → ship/deliver → complete / cancel.
 /// Products are seeded directly because the order handler fetches them by ID.
 /// </summary>
 public class OrdersApiTests : IntegrationTestBase, IClassFixture<RetailStoreWebAppFactory>
@@ -163,11 +165,33 @@ public class OrdersApiTests : IntegrationTestBase, IClassFixture<RetailStoreWebA
     // ── PUT /api/v1/orders/{id}/complete ─────────────────────────────────────
 
     [Fact]
-    public async Task Complete_ConfirmedOrder_Returns204()
+    public async Task Complete_ConfirmedOrder_Returns422()
+    {
+        // Completing a Confirmed order directly is not allowed — must be Delivered first.
+        var orderId = await CreateDraftOrderAsync();
+        var client = CreateAdminClient();
+        await client.PutAsJsonAsync($"{Base}/{orderId}/confirm", new { });
+
+        var response = await client.PutAsJsonAsync($"{Base}/{orderId}/complete", new { });
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Fact]
+    public async Task Complete_DeliveredOrder_Returns204()
     {
         var orderId = await CreateDraftOrderAsync();
         var client = CreateAdminClient();
         await client.PutAsJsonAsync($"{Base}/{orderId}/confirm", new { });
+
+        // Advance to Delivered via domain methods (bypasses outbox, which is disabled in tests)
+        Factory.UseDbContext(db =>
+        {
+            var order = db.Set<Order>().First(o => o.Id == orderId);
+            order.MarkShipped();
+            order.MarkDelivered();
+            db.SaveChanges();
+        });
 
         var response = await client.PutAsJsonAsync($"{Base}/{orderId}/complete", new { });
 
@@ -194,13 +218,21 @@ public class OrdersApiTests : IntegrationTestBase, IClassFixture<RetailStoreWebA
         var orderId = await CreateDraftOrderAsync();
         var client = CreateAdminClient();
         await client.PutAsJsonAsync($"{Base}/{orderId}/confirm", new { });
-        await client.PutAsJsonAsync($"{Base}/{orderId}/complete", new { });
+
+        // Advance to Completed via domain methods
+        Factory.UseDbContext(db =>
+        {
+            var order = db.Set<Order>().First(o => o.Id == orderId);
+            order.MarkShipped();
+            order.MarkDelivered();
+            order.Complete();
+            db.SaveChanges();
+        });
 
         var response = await client.PutAsJsonAsync(
             $"{Base}/{orderId}/cancel",
             new { orderId, reason = "too late" });
 
-        // InvalidOrderStatusTransition → BusinessRule → 422
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
