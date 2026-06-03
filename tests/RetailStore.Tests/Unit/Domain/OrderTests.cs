@@ -90,7 +90,7 @@ public class OrderTests
     [Fact]
     public void AddItem_ToCompletedOrder_ThrowsDomainException()
     {
-        var order = BuildConfirmedOrderWithItem();
+        var order = BuildDeliveredOrderWithItem();
         order.Complete();
 
         var act = () => order.AddItem(Guid.NewGuid(), 1, ValidPrice);
@@ -240,17 +240,117 @@ public class OrderTests
         order.DomainEvents.Should().ContainSingle(e => e is OrderConfirmedEvent);
     }
 
+    // ── MarkShipped ───────────────────────────────────────────────────────────
+
+    [Fact]
+    public void MarkShipped_ConfirmedOrder_StatusBecomesShipped()
+    {
+        var order = BuildConfirmedOrderWithItem();
+
+        order.MarkShipped();
+
+        order.Status.Should().Be(OrderStatus.Shipped);
+    }
+
+    [Fact]
+    public void MarkShipped_DraftOrder_ThrowsDomainException()
+    {
+        var order = Order.Create(Guid.NewGuid());
+        order.AddItem(Guid.NewGuid(), 1, ValidPrice);
+
+        var act = () => order.MarkShipped();
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void MarkShipped_AlreadyShippedOrder_ThrowsDomainException()
+    {
+        var order = BuildConfirmedOrderWithItem();
+        order.MarkShipped();
+
+        var act = () => order.MarkShipped();
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void MarkShipped_RaisesOrderShippedEvent()
+    {
+        var order = BuildConfirmedOrderWithItem();
+        order.ClearDomainEvents();
+
+        order.MarkShipped();
+
+        order.DomainEvents.Should().ContainSingle(e => e is OrderShippedEvent);
+    }
+
+    // ── MarkDelivered ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public void MarkDelivered_ShippedOrder_StatusBecomesDelivered()
+    {
+        var order = BuildConfirmedOrderWithItem();
+        order.MarkShipped();
+
+        order.MarkDelivered();
+
+        order.Status.Should().Be(OrderStatus.Delivered);
+    }
+
+    [Fact]
+    public void MarkDelivered_ConfirmedOrder_ThrowsDomainException()
+    {
+        var order = BuildConfirmedOrderWithItem();
+
+        var act = () => order.MarkDelivered();
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void MarkDelivered_AlreadyDeliveredOrder_ThrowsDomainException()
+    {
+        var order = BuildDeliveredOrderWithItem();
+
+        var act = () => order.MarkDelivered();
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void MarkDelivered_RaisesOrderDeliveredEvent()
+    {
+        var order = BuildConfirmedOrderWithItem();
+        order.MarkShipped();
+        order.ClearDomainEvents();
+
+        order.MarkDelivered();
+
+        order.DomainEvents.Should().ContainSingle(e => e is OrderDeliveredEvent);
+    }
+
     // ── Complete ──────────────────────────────────────────────────────────────
 
     [Fact]
-    public void Complete_ConfirmedOrder_StatusBecomesCompletedAndCompletedAtIsSet()
+    public void Complete_DeliveredOrder_StatusBecomesCompletedAndCompletedAtIsSet()
     {
-        var order = BuildConfirmedOrderWithItem();
+        var order = BuildDeliveredOrderWithItem();
 
         order.Complete();
 
         order.Status.Should().Be(OrderStatus.Completed);
         order.CompletedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Complete_ConfirmedOrder_ThrowsDomainException()
+    {
+        var order = BuildConfirmedOrderWithItem();
+
+        var act = () => order.Complete();
+
+        act.Should().Throw<DomainException>();
     }
 
     [Fact]
@@ -267,7 +367,7 @@ public class OrderTests
     [Fact]
     public void Complete_RaisesOrderCompletedEvent()
     {
-        var order = BuildConfirmedOrderWithItem();
+        var order = BuildDeliveredOrderWithItem();
         order.ClearDomainEvents();
 
         order.Complete();
@@ -291,7 +391,7 @@ public class OrderTests
     [Fact]
     public void Cancel_CompletedOrder_ThrowsDomainException()
     {
-        var order = BuildConfirmedOrderWithItem();
+        var order = BuildDeliveredOrderWithItem();
         order.Complete();
 
         var act = () => order.Cancel("too late");
@@ -321,6 +421,28 @@ public class OrderTests
         order.DomainEvents.Should().ContainSingle(e => e is OrderCancelledEvent);
     }
 
+    // ── Full lifecycle ────────────────────────────────────────────────────────
+
+    [Fact]
+    public void FullLifecycle_Draft_Confirmed_Shipped_Delivered_Completed()
+    {
+        var order = Order.Create(Guid.NewGuid());
+        order.AddItem(Guid.NewGuid(), 1, ValidPrice);
+
+        order.Confirm();
+        order.Status.Should().Be(OrderStatus.Confirmed);
+
+        order.MarkShipped();
+        order.Status.Should().Be(OrderStatus.Shipped);
+
+        order.MarkDelivered();
+        order.Status.Should().Be(OrderStatus.Delivered);
+
+        order.Complete();
+        order.Status.Should().Be(OrderStatus.Completed);
+        order.CompletedAt.Should().NotBeNull();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static Order BuildConfirmedOrderWithItem()
@@ -328,6 +450,14 @@ public class OrderTests
         var order = Order.Create(Guid.NewGuid());
         order.AddItem(Guid.NewGuid(), 1, ValidPrice);
         order.Confirm();
+        return order;
+    }
+
+    private static Order BuildDeliveredOrderWithItem()
+    {
+        var order = BuildConfirmedOrderWithItem();
+        order.MarkShipped();
+        order.MarkDelivered();
         return order;
     }
 }

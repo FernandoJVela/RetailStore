@@ -26,3 +26,11 @@ public sealed record OrderItemAddedEvent(
 public sealed record OrderItemRemovedEvent(
     Guid OrderId, Guid ProductId) : DomainEvent
 { public override string EventType => "OrderItemRemoved"; }
+
+public sealed record OrderShippedEvent(
+    Guid OrderId, Guid CustomerId) : DomainEvent
+{ public override string EventType => "OrderShipped"; }
+
+public sealed record OrderDeliveredEvent(
+    Guid OrderId, Guid CustomerId) : DomainEvent
+{ public override string EventType => "OrderDelivered"; }

@@ -224,7 +224,15 @@
     "status_captured": "Capturado",
     "status_failed": "Fallido",
     "status_refunded": "Reembolsado",
-    "status_cancelled": "Cancelado"
+    "status_cancelled": "Cancelado",
+    "createPayment": "Crear pago",
+    "selectOrder": "Pedido",
+    "chooseConfirmedOrder": "Seleccionar pedido confirmado",
+    "orderTotal": "Total del pedido",
+    "method": "Método de pago",
+    "chooseMethod": "Seleccionar método",
+    "methodDetail": "Detalle del método",
+    "gateway": "Pasarela de pago"
   },
   "notifications": {
     "unreadCount": "{{count}} sin leer",

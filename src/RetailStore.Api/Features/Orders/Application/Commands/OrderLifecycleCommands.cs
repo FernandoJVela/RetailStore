@@ -80,6 +80,46 @@ public sealed class CancelOrderHandler(IRepository<Order> orders) : IRequestHand
     }
 }
  
+// ─── Mark Shipped (triggered by ShipmentShipped event) ──────
+public sealed record MarkOrderShippedCommand(
+    Guid OrderId
+) : ICommand, IRequirePermission
+{
+    public string RequiredPermission => "orders:write";
+}
+
+public sealed class MarkOrderShippedHandler(IRepository<Order> orders)
+    : IRequestHandler<MarkOrderShippedCommand, Unit>
+{
+    public async Task<Unit> Handle(MarkOrderShippedCommand cmd, CancellationToken ct)
+    {
+        var order = await orders.GetByIdAsync(cmd.OrderId, ct)
+            ?? throw new DomainException(OrderErrors.OrderNotFound(cmd.OrderId));
+        order.MarkShipped();
+        return Unit.Value;
+    }
+}
+
+// ─── Mark Delivered (triggered by ShipmentDelivered event) ──
+public sealed record MarkOrderDeliveredCommand(
+    Guid OrderId
+) : ICommand, IRequirePermission
+{
+    public string RequiredPermission => "orders:write";
+}
+
+public sealed class MarkOrderDeliveredHandler(IRepository<Order> orders)
+    : IRequestHandler<MarkOrderDeliveredCommand, Unit>
+{
+    public async Task<Unit> Handle(MarkOrderDeliveredCommand cmd, CancellationToken ct)
+    {
+        var order = await orders.GetByIdAsync(cmd.OrderId, ct)
+            ?? throw new DomainException(OrderErrors.OrderNotFound(cmd.OrderId));
+        order.MarkDelivered();
+        return Unit.Value;
+    }
+}
+
 // ─── Remove Item ────────────────────────────────────────────
 public sealed record RemoveOrderItemCommand(
     Guid OrderId, 

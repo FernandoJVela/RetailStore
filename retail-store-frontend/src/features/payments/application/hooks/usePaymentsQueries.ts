@@ -33,6 +33,15 @@ export function usePayment(id: string) {
 // MUTATIONS — Lifecycle
 // ═══════════════════════════════════════════════════════════
  
+export function useCreatePayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { orderId: string; method: string; methodDetail?: string; gatewayName?: string }) =>
+      paymentsRepository.create(data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: KEYS.all }); },
+  });
+}
+
 export function useAuthorizePayment() {
   const qc = useQueryClient();
   return useMutation({

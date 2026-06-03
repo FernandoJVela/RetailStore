@@ -1,25 +1,36 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using RetailStore.Api.Features.Orders.Domain;
+using RetailStore.Api.Features.Payments.Application;
+using RetailStore.Api.Features.Payments.Application.Commands;
 using RetailStore.Api.Features.Payments.Domain;
- 
+using RetailStore.Api.Features.Shipping.Application.Commands;
+
 namespace RetailStore.Api.Features.Payments.Application.Events;
- 
-public sealed class PaymentCapturedHandler(ILogger<PaymentCapturedHandler> log)
+
+public sealed class PaymentCapturedHandler(
+    ISender sender, ILogger<PaymentCapturedHandler> log)
     : INotificationHandler<PaymentCapturedEvent>
 {
-    public Task Handle(PaymentCapturedEvent e, CancellationToken ct)
+    public async Task Handle(PaymentCapturedEvent e, CancellationToken ct)
     {
         log.LogInformation(
-            "Payment {PaymentId} captured: {Amount} {Currency} for order {OrderId}",
+            "Payment {PaymentId} captured: {Amount} {Currency} for order {OrderId} — creating shipment",
             e.PaymentId, e.Amount, e.Currency, e.OrderId);
-        // TODO: Update order status
-        // TODO: Trigger shipment creation
-        // TODO: Send payment confirmation notification
-        return Task.CompletedTask;
+
+        try
+        {
+            await sender.Send(new CreateShipmentCommand(e.OrderId), ct);
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex,
+                "Failed to auto-create shipment for order {OrderId} after payment capture",
+                e.OrderId);
+        }
     }
 }
- 
+
 public sealed class PaymentFailedHandler(ILogger<PaymentFailedHandler> log)
     : INotificationHandler<PaymentFailedEvent>
 {
@@ -28,12 +39,10 @@ public sealed class PaymentFailedHandler(ILogger<PaymentFailedHandler> log)
         log.LogError(
             "Payment {PaymentId} FAILED for order {OrderId}: {Reason}",
             e.PaymentId, e.OrderId, e.Reason);
-        // TODO: Notify customer
-        // TODO: Retry with different method?
         return Task.CompletedTask;
     }
 }
- 
+
 public sealed class RefundCompletedHandler(ILogger<RefundCompletedHandler> log)
     : INotificationHandler<RefundCompletedEvent>
 {
@@ -42,11 +51,10 @@ public sealed class RefundCompletedHandler(ILogger<RefundCompletedHandler> log)
         log.LogInformation(
             "Refund {RefundId} completed: {Amount} {Currency} for payment {PaymentId}",
             e.RefundId, e.Amount, e.Currency, e.PaymentId);
-        // TODO: Notify customer of refund
         return Task.CompletedTask;
     }
 }
- 
+
 public sealed class PaymentFullyRefundedHandler(ILogger<PaymentFullyRefundedHandler> log)
     : INotificationHandler<PaymentFullyRefundedEvent>
 {
@@ -55,22 +63,37 @@ public sealed class PaymentFullyRefundedHandler(ILogger<PaymentFullyRefundedHand
         log.LogWarning(
             "Payment {PaymentId} fully refunded: {Amount} {Currency} for order {OrderId}",
             e.PaymentId, e.OriginalAmount, e.Currency, e.OrderId);
-        // TODO: Release inventory reservations
-        // TODO: Cancel shipment if not shipped
         return Task.CompletedTask;
     }
 }
- 
-// ─── Cross-module: React to order cancellation ──────────────
-public sealed class CancelPaymentOnOrderCancelled(ILogger<CancelPaymentOnOrderCancelled> log)
+
+// ─── Cross-module: Cancel pending payment when order is cancelled ──
+public sealed class CancelPaymentOnOrderCancelled(
+    IPaymentRepository payments,
+    ISender sender,
+    ILogger<CancelPaymentOnOrderCancelled> log)
     : INotificationHandler<OrderCancelledEvent>
 {
-    public Task Handle(OrderCancelledEvent e, CancellationToken ct)
+    public async Task Handle(OrderCancelledEvent e, CancellationToken ct)
     {
-        log.LogInformation(
-            "Order {OrderId} cancelled — payment should be cancelled/refunded",
-            e.OrderId);
-        // TODO: Load payment by OrderId, cancel or refund based on status
-        return Task.CompletedTask;
+        var payment = await payments.GetByOrderIdAsync(e.OrderId, ct);
+        if (payment is null)
+            return;
+
+        if (payment.Status is PaymentStatus.Pending or PaymentStatus.Authorized)
+        {
+            log.LogInformation(
+                "Order {OrderId} cancelled — cancelling payment {PaymentId}",
+                e.OrderId, payment.Id);
+
+            await sender.Send(
+                new CancelPaymentCommand(payment.Id, $"Order cancelled: {e.Reason}"), ct);
+        }
+        else
+        {
+            log.LogInformation(
+                "Order {OrderId} cancelled — payment {PaymentId} in status {Status}, no action taken",
+                e.OrderId, payment.Id, payment.Status);
+        }
     }
 }

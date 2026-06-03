@@ -23,7 +23,12 @@ public sealed class AuthorizationBehavior<TReq, TRes>
         if (request is not IRequirePermission permReq)
             return await next();
 
-        var user = _http.HttpContext?.User;
+        // No HTTP context means the command originates from a background/system service (e.g. OutboxProcessor).
+        // Those callers are internal and trusted — skip auth.
+        if (_http.HttpContext is null)
+            return await next();
+
+        var user = _http.HttpContext.User;
         if (user?.Identity?.IsAuthenticated != true)
             throw new DomainException(new DomainError(
                 "UNAUTHORIZED", "Authentication required.",

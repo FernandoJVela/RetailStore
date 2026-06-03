@@ -15,8 +15,9 @@ export {
 
 export { mapPaymentDetailDto, mapPaymentDto } from './application/mappers/payments.mapper';
 
-export { 
+export {
   usePayments, usePayment,
+  useCreatePayment,
   useAuthorizePayment, useCapturePayment, useFailPayment, useCancelPayment,
   useRequestRefund, useCompleteRefund
 } from './application/hooks/usePaymentsQueries';
@@ -28,5 +29,5 @@ export {
 export { paymentsRepository } from './infrastructure/payments.repository';
 
 export { PaymentRow } from './ui/components/PaymentRow';
-
 export { PaymentDetailPanel } from './ui/components/PaymentDetailPanel';
+export { CreatePaymentModal } from './ui/components/CreatePaymentModal';

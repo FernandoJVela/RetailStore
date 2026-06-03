@@ -3,8 +3,8 @@
  *
  * Covers the core business flow end-to-end:
  *   1. Create a new order via the UI (customer + product from seeded API data)
- *   2. Confirm the order — status transitions from Pending → Confirmed
- *   3. Verify inventory reflects the stock change (available < initial)
+ *   2. Confirm the order — status transitions from Draft → Confirmed
+ *   3. Verify inventory reflects the reserved stock after confirmation
  *   4. Verify the audit log has entries for the order actions
  *
  * Tests are sequential and share seeded product/customer data created in beforeAll.
@@ -41,9 +41,9 @@ test.describe('Order lifecycle', () => {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  /** Return the first row in the orders table that shows status "Pending". */
-  function firstPendingRow(page: import('@playwright/test').Page) {
-    return page.locator('table tbody tr').filter({ hasText: /pending/i }).first();
+  /** Return the first row in the orders table that shows status "Draft". */
+  function firstDraftRow(page: import('@playwright/test').Page) {
+    return page.locator('table tbody tr').filter({ hasText: /draft/i }).first();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -59,20 +59,15 @@ test.describe('Order lifecycle', () => {
     await expect(modal).toBeVisible({ timeout: 8_000 });
 
     // ── Customer ─────────────────────────────────────────────────
-    // <Select label="Customer"> renders a <label for="…"> + <select id="…">
     await modal.getByLabel('Customer').selectOption({ value: customer.customerId });
 
     // ── Product ──────────────────────────────────────────────────
-    // The product <Select> has no label prop — it's the second <select> in the modal
-    // (customer select is first; product select is second)
     await modal.locator('select').nth(1).selectOption({ value: product.productId });
 
     // ── Quantity ─────────────────────────────────────────────────
     await modal.locator('input[type="number"]').fill(String(ORDER_QTY));
 
     // ── Add button ───────────────────────────────────────────────
-    // Icon-only <Button> next to the quantity input inside the "Add items" section.
-    // Located via XPath sibling: the <div class="flex gap-2"> after the "Add items" label.
     await modal
       .locator('xpath=.//label[text()="Add items"]/following-sibling::div//button')
       .click();
@@ -81,14 +76,13 @@ test.describe('Order lifecycle', () => {
     await expect(modal.getByText(product.name)).toBeVisible();
 
     // ── Submit ───────────────────────────────────────────────────
-    // Button text: "Create Order (2 items)"
     await modal.getByRole('button', { name: /create order/i }).click();
 
     // Modal closes
     await expect(modal).not.toBeVisible({ timeout: 8_000 });
 
-    // The new Pending order row is in the table (orders sorted by date desc)
-    await expect(firstPendingRow(page)).toBeVisible({ timeout: 8_000 });
+    // The new Draft order row is in the table
+    await expect(firstDraftRow(page)).toBeVisible({ timeout: 8_000 });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -98,14 +92,14 @@ test.describe('Order lifecycle', () => {
   test('confirms the order – status changes to Confirmed', async ({ page }) => {
     await page.goto('/orders');
 
-    // The order we just created is the most recent Pending row (list sorted date desc)
-    const row = firstPendingRow(page);
+    // The order we just created is the most recent Draft row
+    const row = firstDraftRow(page);
     await expect(row).toBeVisible({ timeout: 8_000 });
 
-    // Open the action menu (last button in the row – the "…" trigger)
+    // Open the action menu (last button in the row)
     await row.getByRole('button').last().click();
 
-    // Click "View Details" in the dropdown
+    // Click "View Details"
     await page.getByText('View Details').click();
 
     // Detail slide-panel opens — wait for the Confirm Order button
@@ -115,27 +109,24 @@ test.describe('Order lifecycle', () => {
     // Confirm
     await confirmBtn.click();
 
-    // The button disappears (status is no longer Draft/Pending)
+    // Button disappears (status is no longer Draft/Pending)
     await expect(confirmBtn).toBeHidden({ timeout: 8_000 });
 
-    // The status badge inside the panel now reads "Confirmed"
-    // Use .first() in case the word "Confirmed" also appears in filter pills elsewhere
+    // Status badge inside the panel now reads "Confirmed"
     await expect(page.getByText('Confirmed').first()).toBeVisible({ timeout: 8_000 });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 3. Inventory
+  // 3. Inventory — stock reserved after confirmation
   // ═══════════════════════════════════════════════════════════════════════════
 
-  test('inventory shows reduced available stock after order confirmation', async ({ page }) => {
+  test('inventory shows reserved stock after order confirmation', async ({ page }) => {
     await page.goto('/inventory');
 
-    // Search by our unique product name
     const searchInput = page.getByPlaceholder(/search/i);
     await expect(searchInput).toBeVisible({ timeout: 8_000 });
     await searchInput.fill(product.name);
 
-    // Wait for the matching row
     const productRow = page
       .locator('table tbody tr')
       .filter({ hasText: product.name })
@@ -143,11 +134,16 @@ test.describe('Order lifecycle', () => {
     await expect(productRow).toBeVisible({ timeout: 8_000 });
 
     // Column layout: Product(0) | OnHand(1) | Reserved(2) | Available(3) | …
-    // After order creation + confirmation, Available must be < INITIAL_STOCK
+    // After order confirmation, Reserved > 0 and Available < INITIAL_STOCK
+    const reservedText  = await productRow.locator('td').nth(2).textContent();
     const availableText = await productRow.locator('td').nth(3).textContent();
+
+    const reserved  = parseInt((reservedText  ?? '0').replace(/[^0-9]/g, ''), 10);
     const available = parseInt((availableText ?? '0').replace(/[^0-9]/g, ''), 10);
 
+    expect(reserved).toBeGreaterThan(0);
     expect(available).toBeLessThan(INITIAL_STOCK);
+    expect(available).toBe(INITIAL_STOCK - reserved);
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -157,8 +153,6 @@ test.describe('Order lifecycle', () => {
   test('audit log has entries for the order actions', async ({ page }) => {
     await page.goto('/audit');
 
-    // The Log tab is active by default.
-    // Optionally filter by the Orders module if the option exists.
     const moduleFilter = page.locator('select').first();
     await expect(moduleFilter).toBeVisible({ timeout: 8_000 });
 
@@ -168,9 +162,45 @@ test.describe('Order lifecycle', () => {
       await moduleFilter.selectOption({ label: orderOption });
     }
 
-    // At least one audit entry must be visible (the audit system recorded our actions)
     await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10_000 });
     const rowCount = await page.locator('table tbody tr').count();
     expect(rowCount).toBeGreaterThan(0);
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 5. Payments — create payment for confirmed order
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  test('can create a payment for the confirmed order from the payments page', async ({ page }) => {
+    await page.goto('/payments');
+
+    // Click "Create Payment"
+    await page.getByRole('button', { name: /create payment/i }).click();
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible({ timeout: 8_000 });
+
+    // Select the confirmed order (our product name is unique — find the right order)
+    const orderSelect = modal.locator('select').first();
+    await expect(orderSelect).toBeVisible({ timeout: 5_000 });
+
+    // Pick any confirmed order (there's at least one from previous test steps)
+    const options = await orderSelect.locator('option').allTextContents();
+    const nonEmpty = options.filter((o) => o.trim() && !o.toLowerCase().includes('select'));
+    expect(nonEmpty.length).toBeGreaterThan(0);
+
+    await orderSelect.selectOption({ index: 1 }); // first real order
+
+    // Select Credit Card method
+    await modal.locator('select').nth(1).selectOption({ value: 'CreditCard' });
+
+    // Submit
+    await modal.getByRole('button', { name: /create payment/i }).click();
+
+    // Modal closes on success
+    await expect(modal).not.toBeVisible({ timeout: 8_000 });
+
+    // A new Pending payment row appears in the table
+    const pendingRow = page.locator('table tbody tr').filter({ hasText: /pending/i }).first();
+    await expect(pendingRow).toBeVisible({ timeout: 8_000 });
   });
 });

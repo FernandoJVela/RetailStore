@@ -17,10 +17,12 @@ public static class OrderErrors
         "ORDER_CUSTOMER_NOT_FOUND", $"Customer '{id}' not found.", DomainErrorType.NotFound);
     public static DomainError InvalidOrderDate() => new(
         "ORDER_INVALID_DATE", "Order date cannot be in the future.", DomainErrorType.BusinessRule);
-    public static DomainError CannotCompleteEmptyOrder() => new(
-        "ORDER_CANNOT_COMPLETE_EMPTY", "Cannot complete an order without items.", DomainErrorType.BusinessRule);
+    public static DomainError CannotConfirmEmptyOrder() => new(
+        "ORDER_CANNOT_CONFIRM_EMPTY", "Cannot confirm an order without items.", DomainErrorType.BusinessRule);
     public static DomainError OrderAlreadyCompleted() => new(
-        "ORDER_ALREADY_COMPLETED", "Order is already completed or cancelled.", DomainErrorType.Conflict);
+        "ORDER_ALREADY_COMPLETED", "Order is already completed.", DomainErrorType.Conflict);
+    public static DomainError OrderAlreadyCancelled() => new(
+        "ORDER_ALREADY_CANCELLED", "Order is already cancelled.", DomainErrorType.Conflict);
     public static DomainError InvalidOrderStatusTransition(OrderStatus from, OrderStatus to) => new(
         "ORDER_INVALID_STATUS_TRANSITION", $"Cannot transition from '{from}' to '{to}'.", DomainErrorType.BusinessRule);
     public static DomainError InvalidOrderStatusForModification(OrderStatus status) => new(

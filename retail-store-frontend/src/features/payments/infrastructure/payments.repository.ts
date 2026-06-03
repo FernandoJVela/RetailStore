@@ -13,6 +13,11 @@ export const paymentsRepository = {
     return mapPaymentDetailDto(data);
   },
  
+  async create(data: { orderId: string; method: string; methodDetail?: string; gatewayName?: string }): Promise<string> {
+    const { data: id } = await paymentsApi.create(data);
+    return id;
+  },
+
   async authorize(id: string, gatewayTransactionId?: string): Promise<void> {
     await paymentsApi.authorize(id, { gatewayTransactionId });
   },

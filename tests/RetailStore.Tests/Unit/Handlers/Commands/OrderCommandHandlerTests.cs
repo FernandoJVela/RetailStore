@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Moq;
+using RetailStore.Api.Features.Inventory.Application;
+using RetailStore.Api.Features.Inventory.Domain;
 using RetailStore.Api.Features.Orders.Application.Commands;
 using RetailStore.Api.Features.Orders.Domain;
 using RetailStore.Api.Features.Products.Domain;
@@ -19,6 +21,7 @@ public class OrderCommandHandlerTests
     {
         private readonly Mock<IRepository<Order>> _orders = new();
         private readonly Mock<IRepository<Product>> _products = new();
+        private readonly Mock<IInventoryRepository> _inventory = new();
         private readonly CreateOrderHandler _handler;
 
         public CreateOrderHandlerTests()
@@ -26,7 +29,11 @@ public class OrderCommandHandlerTests
             _orders.Setup(r => r.AddAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()))
                    .Returns(Task.CompletedTask);
 
-            _handler = new CreateOrderHandler(_orders.Object, _products.Object);
+            // Default: no inventory record → skip check (treat as untracked)
+            _inventory.Setup(r => r.GetByProductIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync((InventoryItem?)null);
+
+            _handler = new CreateOrderHandler(_orders.Object, _products.Object, _inventory.Object);
         }
 
         [Fact]
@@ -134,6 +141,73 @@ public class OrderCommandHandlerTests
 
             _orders.Verify(r => r.AddAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()), Times.Never);
         }
+
+        [Fact]
+        public async Task Handle_WhenInsufficientStock_ThrowsDomainException()
+        {
+            var product = new ProductBuilder().Build();
+            var inventoryItem = new InventoryItemBuilder()
+                .WithProductId(product.Id)
+                .WithQuantity(1)  // only 1 in stock
+                .Build();
+
+            var cmd = new CreateOrderCommand(
+                Guid.NewGuid(),
+                null,
+                [new CreateOrderItemDto(product.Id, 5)]); // requesting 5
+
+            _products.Setup(r => r.GetByIdAsync(product.Id, It.IsAny<CancellationToken>()))
+                     .ReturnsAsync(product);
+            _inventory.Setup(r => r.GetByProductIdAsync(product.Id, It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(inventoryItem);
+
+            var act = () => _handler.Handle(cmd, CancellationToken.None);
+
+            await act.Should().ThrowAsync<DomainException>();
+        }
+
+        [Fact]
+        public async Task Handle_WhenNoInventoryRecord_AllowsOrderWithoutStockCheck()
+        {
+            var product = new ProductBuilder().Build();
+            var cmd = new CreateOrderCommand(
+                Guid.NewGuid(),
+                null,
+                [new CreateOrderItemDto(product.Id, 100)]);
+
+            _products.Setup(r => r.GetByIdAsync(product.Id, It.IsAny<CancellationToken>()))
+                     .ReturnsAsync(product);
+            _inventory.Setup(r => r.GetByProductIdAsync(product.Id, It.IsAny<CancellationToken>()))
+                      .ReturnsAsync((InventoryItem?)null);
+
+            var result = await _handler.Handle(cmd, CancellationToken.None);
+
+            result.Should().NotBeEmpty();
+        }
+
+        [Fact]
+        public async Task Handle_WhenSufficientStock_CreatesOrder()
+        {
+            var product = new ProductBuilder().Build();
+            var inventoryItem = new InventoryItemBuilder()
+                .WithProductId(product.Id)
+                .WithQuantity(10)
+                .Build();
+
+            var cmd = new CreateOrderCommand(
+                Guid.NewGuid(),
+                null,
+                [new CreateOrderItemDto(product.Id, 3)]);
+
+            _products.Setup(r => r.GetByIdAsync(product.Id, It.IsAny<CancellationToken>()))
+                     .ReturnsAsync(product);
+            _inventory.Setup(r => r.GetByProductIdAsync(product.Id, It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(inventoryItem);
+
+            var result = await _handler.Handle(cmd, CancellationToken.None);
+
+            result.Should().NotBeEmpty();
+        }
     }
 
     // ─── ConfirmOrderHandler ─────────────────────────────────────────────────
@@ -169,6 +243,96 @@ public class OrderCommandHandlerTests
         }
     }
 
+    // ─── MarkOrderShippedHandler ─────────────────────────────────────────────
+
+    public class MarkOrderShippedHandlerTests
+    {
+        private readonly Mock<IRepository<Order>> _orders = new();
+        private readonly MarkOrderShippedHandler _handler;
+
+        public MarkOrderShippedHandlerTests() => _handler = new MarkOrderShippedHandler(_orders.Object);
+
+        [Fact]
+        public async Task Handle_ConfirmedOrder_StatusBecomesShipped()
+        {
+            var order = new OrderBuilder().BuildConfirmed();
+            _orders.Setup(r => r.GetByIdAsync(order.Id, It.IsAny<CancellationToken>()))
+                   .ReturnsAsync(order);
+
+            await _handler.Handle(new MarkOrderShippedCommand(order.Id), CancellationToken.None);
+
+            order.Status.Should().Be(OrderStatus.Shipped);
+        }
+
+        [Fact]
+        public async Task Handle_WhenOrderNotFound_ThrowsDomainException()
+        {
+            _orders.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                   .ReturnsAsync((Order?)null);
+
+            var act = () => _handler.Handle(new MarkOrderShippedCommand(Guid.NewGuid()), CancellationToken.None);
+
+            await act.Should().ThrowAsync<DomainException>();
+        }
+
+        [Fact]
+        public async Task Handle_DraftOrder_ThrowsDomainException()
+        {
+            var order = new OrderBuilder().BuildWithItem();
+            _orders.Setup(r => r.GetByIdAsync(order.Id, It.IsAny<CancellationToken>()))
+                   .ReturnsAsync(order);
+
+            var act = () => _handler.Handle(new MarkOrderShippedCommand(order.Id), CancellationToken.None);
+
+            await act.Should().ThrowAsync<DomainException>();
+        }
+    }
+
+    // ─── MarkOrderDeliveredHandler ───────────────────────────────────────────
+
+    public class MarkOrderDeliveredHandlerTests
+    {
+        private readonly Mock<IRepository<Order>> _orders = new();
+        private readonly MarkOrderDeliveredHandler _handler;
+
+        public MarkOrderDeliveredHandlerTests() => _handler = new MarkOrderDeliveredHandler(_orders.Object);
+
+        [Fact]
+        public async Task Handle_ShippedOrder_StatusBecomesDelivered()
+        {
+            var order = new OrderBuilder().BuildShipped();
+            _orders.Setup(r => r.GetByIdAsync(order.Id, It.IsAny<CancellationToken>()))
+                   .ReturnsAsync(order);
+
+            await _handler.Handle(new MarkOrderDeliveredCommand(order.Id), CancellationToken.None);
+
+            order.Status.Should().Be(OrderStatus.Delivered);
+        }
+
+        [Fact]
+        public async Task Handle_WhenOrderNotFound_ThrowsDomainException()
+        {
+            _orders.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                   .ReturnsAsync((Order?)null);
+
+            var act = () => _handler.Handle(new MarkOrderDeliveredCommand(Guid.NewGuid()), CancellationToken.None);
+
+            await act.Should().ThrowAsync<DomainException>();
+        }
+
+        [Fact]
+        public async Task Handle_ConfirmedOrder_ThrowsDomainException()
+        {
+            var order = new OrderBuilder().BuildConfirmed();
+            _orders.Setup(r => r.GetByIdAsync(order.Id, It.IsAny<CancellationToken>()))
+                   .ReturnsAsync(order);
+
+            var act = () => _handler.Handle(new MarkOrderDeliveredCommand(order.Id), CancellationToken.None);
+
+            await act.Should().ThrowAsync<DomainException>();
+        }
+    }
+
     // ─── CompleteOrderHandler ────────────────────────────────────────────────
 
     public class CompleteOrderHandlerTests
@@ -179,9 +343,9 @@ public class OrderCommandHandlerTests
         public CompleteOrderHandlerTests() => _handler = new CompleteOrderHandler(_orders.Object);
 
         [Fact]
-        public async Task Handle_ConfirmedOrder_OrderStatusBecomesCompleted()
+        public async Task Handle_DeliveredOrder_StatusBecomesCompleted()
         {
-            var order = new OrderBuilder().BuildConfirmed();
+            var order = new OrderBuilder().BuildDelivered();
             _orders.Setup(r => r.GetByIdAsync(order.Id, It.IsAny<CancellationToken>()))
                    .ReturnsAsync(order);
 
@@ -203,9 +367,21 @@ public class OrderCommandHandlerTests
         }
 
         [Fact]
+        public async Task Handle_ConfirmedOrder_ThrowsDomainException()
+        {
+            var order = new OrderBuilder().BuildConfirmed();
+            _orders.Setup(r => r.GetByIdAsync(order.Id, It.IsAny<CancellationToken>()))
+                   .ReturnsAsync(order);
+
+            var act = () => _handler.Handle(new CompleteOrderCommand(order.Id), CancellationToken.None);
+
+            await act.Should().ThrowAsync<DomainException>();
+        }
+
+        [Fact]
         public async Task Handle_DraftOrder_ThrowsDomainException()
         {
-            var order = new OrderBuilder().BuildWithItem(); // Draft, not Confirmed
+            var order = new OrderBuilder().BuildWithItem();
             _orders.Setup(r => r.GetByIdAsync(order.Id, It.IsAny<CancellationToken>()))
                    .ReturnsAsync(order);
 
@@ -251,7 +427,7 @@ public class OrderCommandHandlerTests
         [Fact]
         public async Task Handle_CompletedOrder_ThrowsDomainException()
         {
-            var order = new OrderBuilder().BuildConfirmed();
+            var order = new OrderBuilder().BuildDelivered();
             order.Complete();
             _orders.Setup(r => r.GetByIdAsync(order.Id, It.IsAny<CancellationToken>()))
                    .ReturnsAsync(order);

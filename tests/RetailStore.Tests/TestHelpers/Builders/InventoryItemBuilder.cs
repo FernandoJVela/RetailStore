@@ -9,7 +9,8 @@ public class InventoryItemBuilder
     private int  _threshold       = 10;
     private int  _reserved        = 0;
 
-    public InventoryItemBuilder ForProduct(Guid productId) { _productId = productId; return this; }
+    public InventoryItemBuilder ForProduct(Guid productId)    { _productId = productId; return this; }
+    public InventoryItemBuilder WithProductId(Guid productId) { _productId = productId; return this; }
     public InventoryItemBuilder WithQuantity(int quantity) { _quantity  = quantity;  return this; }
     public InventoryItemBuilder WithThreshold(int t)       { _threshold = t;         return this; }
     public InventoryItemBuilder WithReserved(int reserved) { _reserved  = reserved;  return this; }

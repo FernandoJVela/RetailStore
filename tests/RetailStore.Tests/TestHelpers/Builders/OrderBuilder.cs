@@ -24,4 +24,18 @@ public class OrderBuilder
         order.Confirm();
         return order;
     }
+
+    public Order BuildShipped()
+    {
+        var order = BuildConfirmed();
+        order.MarkShipped();
+        return order;
+    }
+
+    public Order BuildDelivered()
+    {
+        var order = BuildShipped();
+        order.MarkDelivered();
+        return order;
+    }
 }

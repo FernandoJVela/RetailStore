@@ -224,7 +224,15 @@
     "status_captured": "Captured",
     "status_failed": "Failed",
     "status_refunded": "Refunded",
-    "status_cancelled": "Cancelled"
+    "status_cancelled": "Cancelled",
+    "createPayment": "Create Payment",
+    "selectOrder": "Order",
+    "chooseConfirmedOrder": "Select a confirmed order",
+    "orderTotal": "Order total",
+    "method": "Payment method",
+    "chooseMethod": "Select a method",
+    "methodDetail": "Method detail",
+    "gateway": "Payment gateway"
   },
   "notifications": {
     "unreadCount": "{{count}} unread",

@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CreditCard, CheckCircle, Clock } from 'lucide-react';
-import { Card, Spinner, EmptyState, StatCard, FilterPillBar, PageHeader } from '@shared/components/ui';
+import { CreditCard, CheckCircle, Clock, Plus } from 'lucide-react';
+import { Card, Spinner, EmptyState, StatCard, FilterPillBar, PageHeader, Button } from '@shared/components/ui';
 import { usePayments } from '@features/payments/application/hooks/usePaymentsQueries';
-import { PaymentRow } from '@features/payments';
-import { PaymentDetailPanel } from '@features/payments';
+import { PaymentRow, PaymentDetailPanel, CreatePaymentModal } from '@features/payments';
 import type { PaymentStatus } from '@features/payments';
 
 type FilterStatus = 'all' | PaymentStatus;
@@ -13,6 +12,7 @@ export function PaymentsListPage() {
   const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   const statusFilters: { key: FilterStatus; label: string }[] = [
     { key: 'all', label: t('payments.status_all') },
@@ -44,7 +44,17 @@ export function PaymentsListPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader title={t('nav.payments')} subtitle={t('payments.subtitle')} />
+      <PageHeader
+        title={t('nav.payments')}
+        subtitle={t('payments.subtitle')}
+        action={
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('payments.createPayment')}</span>
+            <span className="sm:hidden">{t('common.new')}</span>
+          </Button>
+        }
+      />
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -115,6 +125,8 @@ export function PaymentsListPage() {
           onClose={() => setSelectedId(null)}
         />
       )}
+
+      <CreatePaymentModal isOpen={showCreate} onClose={() => setShowCreate(false)} />
     </div>
   );
 }
