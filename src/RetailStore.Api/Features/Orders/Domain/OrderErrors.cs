@@ -20,9 +20,9 @@ public static class OrderErrors
     public static DomainError CannotConfirmEmptyOrder() => new(
         "ORDER_CANNOT_CONFIRM_EMPTY", "Cannot confirm an order without items.", DomainErrorType.BusinessRule);
     public static DomainError OrderAlreadyCompleted() => new(
-        "ORDER_ALREADY_COMPLETED", "Order is already completed.", DomainErrorType.Conflict);
+        "ORDER_ALREADY_COMPLETED", "Order is already completed.", DomainErrorType.BusinessRule);
     public static DomainError OrderAlreadyCancelled() => new(
-        "ORDER_ALREADY_CANCELLED", "Order is already cancelled.", DomainErrorType.Conflict);
+        "ORDER_ALREADY_CANCELLED", "Order is already cancelled.", DomainErrorType.BusinessRule);
     public static DomainError InvalidOrderStatusTransition(OrderStatus from, OrderStatus to) => new(
         "ORDER_INVALID_STATUS_TRANSITION", $"Cannot transition from '{from}' to '{to}'.", DomainErrorType.BusinessRule);
     public static DomainError InvalidOrderStatusForModification(OrderStatus status) => new(
