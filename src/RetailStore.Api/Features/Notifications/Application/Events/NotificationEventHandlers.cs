@@ -40,7 +40,7 @@ public sealed class NotifyOnOrderConfirmed(RetailStoreDbContext db, ILogger<Noti
     }
 }
  
-public sealed class NotifyOnOrderCancelled(RetailStoreDbContext db, ILogger<NotifyOnOrderCancelled> log)
+public sealed class NotifyOnOrderCancelled(RetailStoreDbContext db)
     : INotificationHandler<OrderCancelledEvent>
 {
     public async Task Handle(OrderCancelledEvent e, CancellationToken ct)
@@ -67,7 +67,7 @@ public sealed class NotifyOnOrderCancelled(RetailStoreDbContext db, ILogger<Noti
 }
  
 // ─── Shipping Events → Notifications ────────────────────────
-public sealed class NotifyOnShipmentShipped(RetailStoreDbContext db, ILogger<NotifyOnShipmentShipped> log)
+public sealed class NotifyOnShipmentShipped(RetailStoreDbContext db)
     : INotificationHandler<ShipmentShippedEvent>
 {
     public async Task Handle(ShipmentShippedEvent e, CancellationToken ct)
@@ -95,7 +95,7 @@ public sealed class NotifyOnShipmentShipped(RetailStoreDbContext db, ILogger<Not
     }
 }
  
-public sealed class NotifyOnShipmentDelivered(RetailStoreDbContext db, ILogger<NotifyOnShipmentDelivered> log)
+public sealed class NotifyOnShipmentDelivered(RetailStoreDbContext db)
     : INotificationHandler<ShipmentDeliveredEvent>
 {
     public async Task Handle(ShipmentDeliveredEvent e, CancellationToken ct)
@@ -168,7 +168,7 @@ public sealed class NotifyOnLowStock(RetailStoreDbContext db, ILogger<NotifyOnLo
 }
  
 // ─── User Events → Notifications ────────────────────────────
-public sealed class NotifyOnUserRegistered(RetailStoreDbContext db, ILogger<NotifyOnUserRegistered> log)
+public sealed class NotifyOnUserRegistered(RetailStoreDbContext db)
     : INotificationHandler<UserRegisteredEvent>
 {
     public async Task Handle(UserRegisteredEvent e, CancellationToken ct)

@@ -23,11 +23,7 @@ public class RetailStoreDbContext : DbContext
         // Prevent EF Core from discovering Money as a standalone entity
         modelBuilder.Ignore<Money>();
         
-        // Apply all configurations from all feature modules
-        modelBuilder.ApplyConfigurationsFromAssembly(
-            typeof(RetailStoreDbContext).Assembly);
-
-        // Scan any additional assemblies passed from Program.cs
+        // Feature modules register their mappings through DbContextAssemblyOptions.
         foreach (var assembly in _assemblyOptions.ConfigurationAssemblies)
             modelBuilder.ApplyConfigurationsFromAssembly(assembly);
 

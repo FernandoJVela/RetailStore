@@ -19,6 +19,7 @@ export default defineConfig({
     // listens on 127.0.0.1 (the container's loopback) and Docker cannot
     // route traffic to it. Locally this has no visible effect.
     host: true,
+    allowedHosts: ['app.retailmanage.store'],
     port: 3000,
     proxy: {
       '/api': {

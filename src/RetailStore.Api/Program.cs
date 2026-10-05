@@ -21,6 +21,7 @@ using HealthChecks.UI.Client;
 using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Data.SqlClient;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 
@@ -35,23 +36,48 @@ if (args.Contains("--migrate"))
         .AddEnvironmentVariables()
         .Build();
 
-    var services = new ServiceCollection();
-    services.AddSingleton<IConfiguration>(config);
-    services.AddSingleton(new DbContextAssemblyOptions
-    {
-        ConfigurationAssemblies = { typeof(Program).Assembly }
-    });
-    services.AddDbContext<RetailStoreDbContext>(o =>
-        o.UseSqlServer(config.GetConnectionString("DefaultConnection")));
-    services.AddLogging(b => b.AddConsole());
+    using var host = Host.CreateDefaultBuilder(args)
+        .ConfigureServices((_, services) =>
+        {
+            services.AddSingleton<IConfiguration>(config);
+            services.AddSingleton(new DbContextAssemblyOptions
+            {
+                ConfigurationAssemblies = { typeof(Program).Assembly }
+            });
+            services.AddDbContext<RetailStoreDbContext>(o =>
+                o.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+        })
+        .Build();
 
-    await using var sp = services.BuildServiceProvider();
-    var migrateLogger = sp.GetRequiredService<ILogger<Program>>();
-    await DatabaseSeeder.SeedAsync(sp, migrateLogger);
+    var migrateLogger = host.Services.GetRequiredService<ILogger<Program>>();
+    await DatabaseSeeder.SeedAsync(host.Services, migrateLogger);
     return;
 }
 
 var builder = WebApplication.CreateBuilder(args);
+
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!builder.Environment.IsEnvironment("Testing")
+    && OperatingSystem.IsLinux()
+    && defaultConnection?.Contains("(localdb)", StringComparison.OrdinalIgnoreCase) == true)
+{
+    var databasePassword = builder.Configuration["DB_PASSWORD"];
+    if (string.IsNullOrWhiteSpace(databasePassword))
+        throw new InvalidOperationException(
+            "LocalDB is not supported on Linux. Set DB_PASSWORD or " +
+            "ConnectionStrings__DefaultConnection to connect to SQL Server on localhost:1433.");
+
+    defaultConnection = new SqlConnectionStringBuilder
+    {
+        DataSource = "localhost,1433",
+        InitialCatalog = "RetailStoreDb",
+        UserID = "sa",
+        Password = databasePassword,
+        TrustServerCertificate = true
+    }.ConnectionString;
+
+    builder.Configuration["ConnectionStrings:DefaultConnection"] = defaultConnection;
+}
 
 // ─── Observability (Serilog + OpenTelemetry + Health) ─────
 builder.AddObservability();
@@ -64,7 +90,7 @@ builder.Services.AddSingleton(new DbContextAssemblyOptions
 
 // ─── EF Core ──────────────────────────────────────────────
 builder.Services.AddDbContext<RetailStoreDbContext>(o =>
-    o.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    o.UseSqlServer(defaultConnection));
 
 // ─── Caching ──────────────────────────────────────────────
 builder.Services.AddMemoryCache();

@@ -52,7 +52,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "${DB_PASSWORD}"
+      SA_PASSWORD: "${DB_PASSWORD:?Set DB_PASSWORD in .env to a strong SQL Server password (at least 8 characters).}"
       MSSQL_PID: Developer
     ports:
       - "1433:1433"
@@ -68,7 +68,6 @@ services:
       start_period: 45s
     networks:
       - retailstore_net
-
   # ─── .NET Backend ────────────────────────────────────────────────────────────
   # Builds the "runtime" stage of /Dockerfile (the tiny aspnet image).
   # Configuration is injected entirely via environment variables — no files to
@@ -93,12 +92,12 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: >-
         Server=db,1433;Database=RetailStoreDb;
-        User Id=sa;Password=${DB_PASSWORD};
+        User Id=sa;Password=${DB_PASSWORD:?Set DB_PASSWORD in .env to a strong SQL Server password (at least 8 characters).};
         TrustServerCertificate=True;
-      Jwt__Secret: "${JWT_SECRET}"
+      Jwt__Secret: "${JWT_SECRET:?Set JWT_SECRET in .env to a random secret of at least 32 bytes.}"
       Jwt__Issuer: RetailStore
       Jwt__Audience: RetailStore
-      Seed__AdminEmail: "${SEED_ADMIN_EMAIL}"
+      Seed__AdminEmail: "${SEED_ADMIN_EMAIL:?Set SEED_ADMIN_EMAIL in .env to the admin user's email address.}"
     ports:
       - "5240:8080"
     depends_on:
@@ -106,6 +105,7 @@ services:
         condition: service_healthy
     networks:
       - retailstore_net
+      - proxy-network
 
   # ─── React Frontend (Vite dev server) ────────────────────────────────────────
   # Builds the "dev" stage of /retail-store-frontend/Dockerfile.
@@ -131,6 +131,7 @@ services:
       - backend
     networks:
       - retailstore_net
+      - proxy-network
 
 # ─── Named Volumes ──────────────────────────────────────────────────────────────
 volumes:
@@ -140,3 +141,5 @@ volumes:
 networks:
   retailstore_net:
     driver: bridge
+  proxy-network:
+    external: true

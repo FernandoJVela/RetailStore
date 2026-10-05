@@ -23,7 +23,7 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(n => n.Body).IsRequired();
  
         builder.Property(n => n.Status).HasConversion<string>().HasMaxLength(20).IsRequired().HasDefaultValue(NotificationStatus.Pending);
-        builder.Property(n => n.Priority).HasConversion<string>().HasMaxLength(10).IsRequired().HasDefaultValue(NotificationPriority.Normal);
+        builder.Property(n => n.Priority).HasConversion<string>().HasMaxLength(10).IsRequired();
  
         builder.Property(n => n.SentAt);
         builder.Property(n => n.DeliveredAt);

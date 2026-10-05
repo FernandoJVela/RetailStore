@@ -13,6 +13,10 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log)
         Exception ex, 
         CancellationToken ct)
     {
+        if (ex is not DomainException and not OperationCanceledException)
+            log.LogError(ex, "Unhandled exception processing {Method} {Path}",
+                ctx.Request.Method, ctx.Request.Path);
+
         var (status, problem) = ex switch
         {
             DomainException d => ((int)d.Error.Type, BuildProblem(d)),
