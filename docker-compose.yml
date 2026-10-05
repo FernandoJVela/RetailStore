@@ -50,6 +50,7 @@ services:
   #   container restarts and removals. "docker-compose down -v" deletes the volume.
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
       SA_PASSWORD: "${DB_PASSWORD:?Set DB_PASSWORD in .env to a strong SQL Server password (at least 8 characters).}"
@@ -83,6 +84,7 @@ services:
   #   Without this, the backend would crash and restart several times before
   #   SQL Server is ready — wasting time and creating confusing log noise.
   backend:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
@@ -119,6 +121,7 @@ services:
   #   name (Docker DNS), not localhost. Outside Docker (npm run dev locally) the
   #   variable is absent and the fallback http://localhost:5240 is used.
   frontend:
+    restart: unless-stopped
     build:
       context: ./retail-store-frontend
       dockerfile: Dockerfile

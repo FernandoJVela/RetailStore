@@ -140,7 +140,7 @@ jobs:
   # The git SHA tag pins the exact image, making every deploy traceable to a commit.
   deploy:
     name: Deploy
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     needs: build-push
     environment: dev   # maps to a GitHub Environment for approval gates / env secrets
 
@@ -156,16 +156,31 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
       - name: Set up kubeconfig
-        # KUBECONFIG_DEV is a repository secret containing the base64-encoded kubeconfig.
-        # For a cloud cluster: export the kubeconfig, base64-encode it, add as a secret.
-        #   GKE:  gcloud container clusters get-credentials ... | base64
-        #   AKS:  az aks get-credentials ...                   | base64
-        #   EKS:  aws eks update-kubeconfig ...                 | base64
+        # Prefer the environment secret; otherwise use the self-hosted runner's
+        # local kubeconfig. A home-server cluster API is not reachable from GitHub-hosted runners.
+        env:
+          KUBECONFIG_DEV: ${{ secrets.KUBECONFIG_DEV }}
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_DEV }}" | base64 -d > ~/.kube/config
-          chmod 600 ~/.kube/config
+          chmod 700 ~/.kube
+          if [[ -n "$KUBECONFIG_DEV" ]]; then
+            printf '%s' "$KUBECONFIG_DEV" | base64 --decode > ~/.kube/config
+            chmod 600 ~/.kube/config
+          elif [[ ! -s ~/.kube/config ]]; then
+            echo "::error::Configure the dev environment secret KUBECONFIG_DEV or install a kubeconfig for the self-hosted runner."
+            exit 1
+          fi
+
+      - name: Verify Kubernetes connection
+        run: |
+          if ! kubectl cluster-info --request-timeout=10s; then
+            echo "::error::The self-hosted runner cannot reach its Kubernetes API. Check the runner's kubeconfig and cluster status."
+            exit 1
+          fi
 
       - name: Helm upgrade --install
         run: |
@@ -173,7 +188,7 @@ jobs:
             --namespace retailstore-dev \
             --create-namespace \
             --timeout 8m \
-            --atomic \
+            --rollback-on-failure \
             --set backend.image.repository=${{ env.IMAGE_BACKEND }} \
             --set backend.image.tag=${{ github.sha }} \
             --set backend.image.pullPolicy=Always \

@@ -756,7 +756,7 @@ push to master
       └─► build-push      Build + push images to ghcr.io with git SHA tag
                 │         (only on master push, not on PRs)
                 ↓
-            deploy         helm upgrade --install --atomic
+            deploy         helm upgrade --install --rollback-on-failure
                            kubectl rollout status (verify pods healthy)
 ```
 
@@ -978,13 +978,19 @@ Every push to `master` triggers `.github/workflows/ci-cd.yml`:
 3. **`build-push`** (only if both tests pass, only on `master`) — builds both Docker images and pushes to `ghcr.io/fernandojvela/` with two tags:
    - `ghcr.io/fernandojvela/retailstore-backend:<git-sha>` — immutable, used for the deploy
    - `ghcr.io/fernandojvela/retailstore-backend:latest` — mutable, used as build cache for the next run
-4. **`deploy`** — runs `helm upgrade --install --atomic` pointing at the new `<git-sha>` tag.
-   - `--atomic`: if pods fail to become ready, Helm automatically rolls back to the previous release.
+4. **`deploy`** — runs `helm upgrade --install --rollback-on-failure` pointing at the new `<git-sha>` tag on a self-hosted Linux runner with cluster access.
+    - `--rollback-on-failure`: if pods fail to become ready, Helm automatically rolls back to the previous release.
    - `kubectl rollout status` confirms both Deployments are fully healthy before the job exits green.
 
 ### One-time setup
 
-#### 1. Create the GitHub Secrets
+#### 1. Register a self-hosted deployment runner
+
+The deploy job targets a self-hosted Linux runner because a GitHub-hosted runner cannot reach a Kubernetes API exposed only on the homeserver or at `localhost`. Register a runner on the cluster host (or another machine with network access to the cluster) under **Settings → Actions → Runners**. Keep it online and ensure its runner user can access the cluster API.
+
+The workflow uses the `KUBECONFIG_DEV` secret when provided; otherwise it uses `~/.kube/config` belonging to the self-hosted runner user. The kubeconfig's API server address must be reachable from that runner. The workflow runs `kubectl cluster-info` before deploying and stops with an explicit error if connectivity is unavailable.
+
+#### 2. Create the GitHub Secrets
 
 Go to **Settings → Secrets and variables → Actions → New repository secret** and add:
 
@@ -992,7 +998,7 @@ Go to **Settings → Secrets and variables → Actions → New repository secret
 |-------------|-------|
 | `DB_PASSWORD` | Your production SQL Server SA password |
 | `JWT_SECRET` | Your production JWT signing key (≥32 characters) |
-| `KUBECONFIG_DEV` | Base64-encoded kubeconfig for your cluster (see below) |
+| `KUBECONFIG_DEV` | Optional base64-encoded kubeconfig; omit it to use the runner's `~/.kube/config` |
 
 To generate `KUBECONFIG_DEV` from your cluster machine:
 
@@ -1017,14 +1023,14 @@ aws eks update-kubeconfig --name <cluster> --region <region>
 kubectl config view --raw | base64 -w0
 ```
 
-#### 2. Create the GitHub Environment
+#### 3. Create the GitHub Environment
 
 Go to **Settings → Environments → New environment**, name it `dev`. This unlocks:
 - **Protection rules** — require a manual approval before deploying (recommended for production)
 - **Environment secrets** — secrets scoped to this environment only
 - **Deploy history** — a per-environment log of every deploy
 
-#### 3. Make the images public (or configure pull access)
+#### 4. Make the images public (or configure pull access)
 
 GitHub Container Registry images are private by default. Either:
 - Make the packages public: **Your profile → Packages → retailstore-backend → Package settings → Change visibility → Public**
@@ -1064,7 +1070,7 @@ GitHub Actions:
 Total: ~ 10 minutes from push to live
 ```
 
-If the deploy fails (readiness probe never passes), `--atomic` rolls back automatically — no manual intervention needed.
+If the deploy fails (readiness probe never passes), `--rollback-on-failure` rolls back automatically — no manual intervention needed.
 
 ### Rollback
 
